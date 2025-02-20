@@ -1,3 +1,4 @@
+import 'package:afa/path/path_url_afa.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -70,7 +71,7 @@ class WelcomeScreen extends StatelessWidget {
                         children: [
                           // Logo
                           Image.asset(
-                            'assets/images/logo.png', // Cambia a la ruta de tu logo
+                            'assets/images/logo.png',
                             height: 200,
                           ),
                           const SizedBox(height: 30),
@@ -80,16 +81,16 @@ class WelcomeScreen extends StatelessWidget {
                               ? Column(
                                   crossAxisAlignment: CrossAxisAlignment.stretch,
                                   children: [
-                                    _buildButton(context, 'Registrarse', '/registro'),
+                                    _buildButton(context, 'Registrarse', PathUrlAfa().pathRegister),
                                     const SizedBox(height: 15),
-                                    _buildButton(context, 'Iniciar sesión', '/inicio-sesion'),
+                                    _buildButton(context, 'Iniciar sesión', PathUrlAfa().pathLogin),
                                   ],
                                 )
                               : Row(
                                   children: [
-                                    Expanded(child: _buildButton(context, 'Registrarse', '/registro')),
+                                    Expanded(child: _buildButton(context, 'Registrarse', PathUrlAfa().pathRegister)),
                                     const SizedBox(width: 20),
-                                    Expanded(child: _buildButton(context, 'Iniciar sesión', '/inicio-sesion')),
+                                    Expanded(child: _buildButton(context, 'Iniciar sesión', PathUrlAfa().pathLogin)),
                                   ],
                                 ),
                         ],

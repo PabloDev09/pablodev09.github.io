@@ -1,5 +1,5 @@
 name: afa
-description: "A new Flutter project."
+description: "Un proyecto de control."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -30,12 +30,19 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
   go_router: ^14.8.0
 
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  firebase_core: ^3.12.0
+  firebase_auth: ^5.5.0
+  provider: ^6.1.2
+  dio: ^5.8.0+1
+  cloud_firestore: ^5.6.4
 
 dev_dependencies:
   flutter_test:
