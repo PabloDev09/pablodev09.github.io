@@ -1,3 +1,4 @@
+import 'package:afa/providers/user_request_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:afa/router/app_router.dart';
@@ -25,6 +26,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => RegisterProvider()),
+        ChangeNotifierProvider(create: (_) => UserRequestProvider()),
       ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
