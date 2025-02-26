@@ -42,8 +42,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     final registerProvider = Provider.of<RegisterProvider>(context);
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double containerWidth =
-        screenWidth * 0.9 > 700 ? 700 : screenWidth * 0.9;
+    // Definimos anchos fijos:
+    const double formWidth = 700;
+    const double imageWidth = 300;
+    const double spacing = 40;
+    // Usamos layout en fila solo si el ancho es suficiente para ambos elementos
+    final bool isLargeScreen = screenWidth >= (formWidth + imageWidth + spacing);
 
     return Scaffold(
       backgroundColor: Colors.lightBlue[100],
@@ -71,326 +75,359 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(vertical: 20.0),
           child: Center(
-            child: Container(
-              width: containerWidth,
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 15,
-                    offset: Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Título
-                    Container(
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF063970),
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(20),
-                          topRight: Radius.circular(20),
+            child: isLargeScreen
+                ? Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Formulario de registro (pegado a la izquierda)
+                        Container(
+                          width: formWidth,
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.black26,
+                                blurRadius: 15,
+                                offset: Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: _buildRegisterForm(registerProvider),
                         ),
+                        // Imagen (pegada a la derecha)
+                        Image.asset(
+                          'assets/images/logo.png',
+                          width: imageWidth,
+                          fit: BoxFit.contain,
+                        ),
+                      ],
+                    ),
+                  )
+                : Column(
+                    children: [
+                      Container(
+                        width: screenWidth * 0.9,
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 15,
+                              offset: Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: _buildRegisterForm(registerProvider),
                       ),
-                      padding: const EdgeInsets.all(20),
-                      alignment: Alignment.center,
-                      child: const Text(
-                        'Registro',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      const SizedBox(height: 20),
+                      Image.asset(
+                        'assets/images/logo.png',
+                        width: imageWidth,
+                        fit: BoxFit.contain,
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRegisterForm(RegisterProvider registerProvider) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Título del formulario
+          Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              color: Color(0xFF063970),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            padding: const EdgeInsets.all(20),
+            alignment: Alignment.center,
+            child: const Text(
+              'Registro',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          // Contenedor con los campos
+          Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+            ),
+            padding: const EdgeInsets.all(30),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Correo Electrónico
+                _buildFloatingTextField(
+                  label: 'Correo Electrónico',
+                  hint: 'ejemplo@correo.com',
+                  controller: _mailController,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return "Este campo es obligatorio";
+                    }
+                    if (!registerProvider.isCorrectMail(value)) {
+                      return "Introduce un correo válido";
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 15),
+                // Usuario
+                _buildFloatingTextField(
+                  label: 'Usuario',
+                  hint: 'cartogar64',
+                  controller: _usernameController,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return "Este campo es obligatorio";
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 15),
+                // Contraseña
+                _buildFloatingPasswordField(_passwordController, registerProvider),
+                const SizedBox(height: 20),
+                // Datos Personales
+                const Text(
+                  'Datos Personales',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                // Nombre
+                _buildFloatingTextField(
+                  label: 'Nombre',
+                  hint: 'Carlos',
+                  controller: _nameController,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return "Este campo es obligatorio";
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 15),
+                // Apellidos
+                _buildFloatingTextField(
+                  label: 'Apellidos',
+                  hint: 'Toril García',
+                  controller: _surnamesController,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return "Este campo es obligatorio";
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 15),
+                // Teléfono
+                _buildFloatingTextField(
+                  label: 'Teléfono',
+                  hint: '645323211',
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return "Este campo es obligatorio";
+                    }
+                    if (!RegExp(r'^[0-9]{9}$').hasMatch(value)) {
+                      return "El teléfono debe tener 9 dígitos";
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                // Dirección
+                const Text(
+                  'Dirección',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                // Calle y Código Postal
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildFloatingTextField(
+                        label: 'Calle',
+                        hint: 'Calle Leonardo Da Vinci, 40, 2ºE',
+                        controller: _streetController,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return "Este campo es obligatorio";
+                          }
+                          return null;
+                        },
                       ),
                     ),
-
-                    // Contenido principal
-                    Container(
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(20),
-                          bottomRight: Radius.circular(20),
-                        ),
-                      ),
-                      padding: const EdgeInsets.all(30),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Correo
-                          _buildFloatingTextField(
-                            label: 'Correo Electrónico',
-                            hint: 'ejemplo@correo.com',
-                            controller: _mailController,
-                            keyboardType: TextInputType.emailAddress,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return "Este campo es obligatorio";
-                              }
-                              if (!registerProvider.isCorrectMail(value)) {
-                                return "Introduce un correo válido";
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 15),
-
-                          // Usuario
-                          _buildFloatingTextField(
-                            label: 'Usuario',
-                            hint: 'cartogar64',
-                            controller: _usernameController,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return "Este campo es obligatorio";
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 15),
-
-                          // Contraseña
-                          _buildFloatingPasswordField(_passwordController, registerProvider),
-                          const SizedBox(height: 20),
-
-                          // Subtítulo
-                          const Text(
-                            'Datos Personales',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-
-                          // Nombre
-                          _buildFloatingTextField(
-                            label: 'Nombre',
-                            hint: 'Carlos',
-                            controller: _nameController,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return "Este campo es obligatorio";
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 15),
-
-                          // Apellidos
-                          _buildFloatingTextField(
-                            label: 'Apellidos',
-                            hint: 'Toril García',
-                            controller: _surnamesController,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return "Este campo es obligatorio";
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 15),
-
-                          // Teléfono (9 dígitos)
-                          _buildFloatingTextField(
-                            label: 'Teléfono',
-                            hint: '645323211',
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return "Este campo es obligatorio";
-                              }
-                              // Validación de 9 dígitos
-                              if (!RegExp(r'^[0-9]{9}$').hasMatch(value)) {
-                                return "El teléfono debe tener 9 dígitos";
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Subtítulo
-                          const Text(
-                            'Dirección',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-
-                          // Calle y Código Postal
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildFloatingTextField(
-                                  label: 'Calle',
-                                  hint: 'Calle Leonardo Da Vinci, 40, 2ºE',
-                                  controller: _streetController,
-                                  validator: (value) {
-                                    if (value == null || value.trim().isEmpty) {
-                                      return "Este campo es obligatorio";
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 15),
-                              Expanded(
-                                child: _buildFloatingTextField(
-                                  label: 'Código Postal',
-                                  hint: '23740',
-                                  controller: _postalCodeController,
-                                  keyboardType: TextInputType.number,
-                                  validator: (value) {
-                                    if (value == null || value.trim().isEmpty) {
-                                      return "Este campo es obligatorio";
-                                    }
-                                    // Validación de 5 dígitos
-                                    if (!RegExp(r'^[0-9]{5}$').hasMatch(value)) {
-                                      return "El código postal debe tener 5 dígitos";
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 15),
-
-                          // Provincia y Ciudad
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildFloatingDropdown(
-                                  label: 'Provincia',
-                                  hint: 'Seleccione provincia',
-                                  value: registerProvider.selectedProvince,
-                                  items: registerProvider.provincesNames,
-                                  onChanged: (newValue) {
-                                    if (newValue != null) {
-                                      registerProvider.setSelectedProvince(newValue);
-                                    }
-                                  },
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Seleccione una provincia';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 15),
-                              Expanded(
-                                child: _buildFloatingDropdown(
-                                  label: 'Ciudad',
-                                  hint: 'Seleccione ciudad',
-                                  value: registerProvider.selectedCity,
-                                  items: registerProvider.cities,
-                                  onChanged: (newValue) {
-                                    if (newValue != null) {
-                                      registerProvider.setSelectedCity(newValue);
-                                    }
-                                  },
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Seleccione una ciudad';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Botón de registro
-                          Center(
-                            child: ElevatedButton(
-                              onPressed: () async {
-                                if (_formKey.currentState!.validate()) {
-                                  // Construir la dirección combinada
-                                  String address = registerProvider.joinAddress(
-                                    _streetController.text,
-                                    registerProvider.selectedCity ?? "",
-                                    registerProvider.selectedProvince ?? "",
-                                    _postalCodeController.text,
-                                  );
-                                  try {
-                                    await registerProvider.registerUser(
-                                      mail: _mailController.text,
-                                      username: _usernameController.text,
-                                      password: _passwordController.text,
-                                      name: _nameController.text,
-                                      surnames: _surnamesController.text,
-                                      address: address,
-                                      phoneNumber: _phoneController.text,
-                                    );
-                                    _showSubmittedDialog(context);
-                                  } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Error al registrar: $e')),
-                                    );
-                                  }
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue[900],
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 50,
-                                  vertical: 18,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Text(
-                                'Registrarse',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 15),
-
-                          // Navegación a inicio de sesión
-                          Center(
-                            child: TextButton(
-                              onPressed: () {
-                                context.go(PathUrlAfa().pathLogin);
-                              },
-                              child: const Text(
-                                '¿Ya tienes cuenta? Inicia sesión',
-                                style: TextStyle(
-                                  color: Colors.blue,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: _buildFloatingTextField(
+                        label: 'Código Postal',
+                        hint: '23740',
+                        controller: _postalCodeController,
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return "Este campo es obligatorio";
+                          }
+                          if (!RegExp(r'^[0-9]{5}$').hasMatch(value)) {
+                            return "El código postal debe tener 5 dígitos";
+                          }
+                          return null;
+                        },
                       ),
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 15),
+                // Provincia y Ciudad
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildFloatingDropdown(
+                        label: 'Provincia',
+                        hint: 'Seleccione provincia',
+                        value: registerProvider.selectedProvince,
+                        items: registerProvider.provincesNames,
+                        onChanged: (newValue) {
+                          if (newValue != null) {
+                            registerProvider.setSelectedProvince(newValue);
+                          }
+                        },
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Seleccione una provincia';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: _buildFloatingDropdown(
+                        label: 'Ciudad',
+                        hint: 'Seleccione ciudad',
+                        value: registerProvider.selectedCity,
+                        items: registerProvider.cities,
+                        onChanged: (newValue) {
+                          if (newValue != null) {
+                            registerProvider.setSelectedCity(newValue);
+                          }
+                        },
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Seleccione una ciudad';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // Botón de registro
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (_formKey.currentState!.validate()) {
+                        // Construir la dirección combinada
+                        String address = registerProvider.joinAddress(
+                          _streetController.text,
+                          registerProvider.selectedCity ?? "",
+                          registerProvider.selectedProvince ?? "",
+                          _postalCodeController.text,
+                        );
+                        try {
+                          await registerProvider.registerUser(
+                            mail: _mailController.text,
+                            username: _usernameController.text,
+                            password: _passwordController.text,
+                            name: _nameController.text,
+                            surnames: _surnamesController.text,
+                            address: address,
+                            phoneNumber: _phoneController.text,
+                          );
+                          _showSubmittedDialog(context);
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error al registrar: $e')),
+                          );
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue[900],
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 50,
+                        vertical: 18,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Registrarse',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 15),
+                // Navegación a inicio de sesión
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      context.go(PathUrlAfa().pathLogin);
+                    },
+                    child: const Text(
+                      '¿Ya tienes cuenta? Inicia sesión',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -432,11 +469,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // -------------------------------------------------------------------------
-  //                       CAMPOS CON LABEL FLOTANTE
-  // -------------------------------------------------------------------------
-
-  /// Campo de texto con label flotante siempre visible (`FloatingLabelBehavior.always`).
+  // Campo de texto con label flotante
   Widget _buildFloatingTextField({
     required String label,
     required String hint,
@@ -458,23 +491,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  /// Campo de contraseña con label flotante siempre visible.
+  // Campo de contraseña con label flotante
   Widget _buildFloatingPasswordField(TextEditingController controller, RegisterProvider registerProvider) {
     return TextFormField(
       controller: controller,
       cursorColor: Colors.blue,
       obscureText: !_isPasswordVisible,
-// Ejemplo en un TextFormField de contraseña:
-validator: (value) {
-  if (value == null || value.trim().isEmpty) {
-    return "Este campo es obligatorio";
-  }
-  if (!registerProvider.isSecurePassword(value)) {
-    return "La contraseña no es segura. Debe tener al menos 8 caracteres, \n"
-           "incluir mayúsculas, minúsculas, dígitos y un carácter especial.";
-  }
-  return null;
-},
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return "Este campo es obligatorio";
+        }
+        if (!registerProvider.isSecurePassword(value)) {
+          return "La contraseña no es segura. Debe tener al menos 8 caracteres, \n"
+              "incluir mayúsculas, minúsculas, dígitos y un carácter especial.";
+        }
+        return null;
+      },
       decoration: InputDecoration(
         labelText: 'Contraseña',
         hintText: 'Contraseña',
@@ -495,7 +527,7 @@ validator: (value) {
     );
   }
 
-  /// Dropdown con label flotante siempre visible.
+  // Dropdown con label flotante
   Widget _buildFloatingDropdown({
     required String label,
     required String hint,
