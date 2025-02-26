@@ -1,11 +1,13 @@
 import 'package:afa/models/user_register.dart';
 import 'package:afa/helpers/get_provinces_cities.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:afa/services/user_service.dart';
 import 'package:flutter/material.dart';
 
 class RegisterProvider extends ChangeNotifier {
+  
   late UserRegister userRegister;
   final GetProvincesCities _getProvincesCities = GetProvincesCities();
+  final UserService userService = UserService();
   
   final List<String> provincesNames = [
     'Almería',
@@ -90,9 +92,26 @@ class RegisterProvider extends ChangeNotifier {
     return false;
   }
   
-  String joinAddress(String street, String city, String province, String postalCode)
-  {
+  String joinAddress(String street, String city, String province, String postalCode) {
     return "${street.trim()}, ${city.trim()}(${province.trim()}), ${postalCode.trim()}";
+  }
+
+  /// Comprueba si la contraseña cumple con ciertos criterios de seguridad.
+  bool isSecurePassword(String password) {
+    // Ajusta los criterios según tus necesidades:
+    // 1) Longitud >= 8
+    // 2) Al menos una mayúscula
+    // 3) Al menos una minúscula
+    // 4) Al menos un dígito
+    // 5) Al menos un carácter especial (puedes modificar la lista de símbolos)
+    if (password.length < 8) return false;
+    if (!RegExp(r'[A-Z]').hasMatch(password)) return false;
+    if (!RegExp(r'[a-z]').hasMatch(password)) return false;
+    if (!RegExp(r'[0-9]').hasMatch(password)) return false;
+    if (!RegExp(r'[!@#\$%\^&\*\(\)\-\_\=\+{\}\[\]:;\"<>,\.\?\\/|`~]').hasMatch(password)) {
+      return false;
+    }
+    return true;
   }
 
   /// Método para crear el usuario y almacenarlo en la colección "usuarios" de Firestore.
@@ -116,17 +135,8 @@ class RegisterProvider extends ChangeNotifier {
       phoneNumber: phoneNumber,
     );
   
-    // Almacena en Firestore en la colección "usuarios"
-    await FirebaseFirestore.instance.collection('usuarios').add({
-      'mail': userRegister.mail,
-      'username': userRegister.username,
-      'password': userRegister.password,
-      'name': userRegister.name,
-      'surnames': userRegister.surnames,
-      'address': userRegister.address,
-      'phoneNumber': userRegister.phoneNumber,
-      'rol': userRegister.rol,
-      'isActivate': userRegister.isActivate,
-    });
+    await userService.createUser(userRegister);
+
+    notifyListeners();
   }
 }

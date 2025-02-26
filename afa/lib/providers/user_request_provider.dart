@@ -1,9 +1,11 @@
+import 'package:afa/services/user_service.dart';
 import 'package:flutter/material.dart';
 import 'package:afa/models/user_register.dart';
 
-class UserRequestProvider extends ChangeNotifier {
-  // Lista de usuarios pendientes (aquellos que aún no han sido activados)
-  final List<UserRegister> _pendingUsers = [
+class UserRequestProvider extends ChangeNotifier 
+{
+  final UserService userService = UserService();
+  List<UserRegister> pendingUsers = [
     const UserRegister(
       mail: 'juan@example.com',
       username: 'juan123',
@@ -28,35 +30,26 @@ class UserRequestProvider extends ChangeNotifier {
     ),
   ];
 
-  // Getter para acceder a la lista de usuarios pendientes.
-  List<UserRegister> get pendingUsers => _pendingUsers;
+  Future<void> chargeUsers() async
+  {
 
-  /// Método para aceptar un usuario:
-  /// Se crea una nueva instancia del usuario con `isActivate` en true y se elimina de la lista de pendientes.
-  void acceptUser(UserRegister user) {
-    // Creamos una nueva instancia con isActivate = true
-    final acceptedUser = UserRegister(
-      mail: user.mail,
-      username: user.username,
-      password: user.password,
-      name: user.name,
-      surnames: user.surnames,
-      address: user.address,
-      phoneNumber: user.phoneNumber,
-      rol: user.rol,
-      isActivate: true,
-    );
-    // Por el momento, se elimina el usuario de la lista de pendientes.
-    _pendingUsers.remove(user);
-    // En un futuro, se podría actualizar la base de datos con la información de acceptedUser.
+    List<UserRegister> users = await userService.getUsers();
+
+    for(UserRegister user in users)
+    {
+      if(user.mail.trim().isNotEmpty)
+      {
+        pendingUsers.add(user);
+      }
+      
+    }
+
     notifyListeners();
   }
 
-  /// Método para eliminar un usuario:
-  /// Elimina el usuario de la lista de pendientes.
-  void deleteUser(UserRegister user) {
-    _pendingUsers.remove(user);
-    // En el futuro, se implementará la eliminación en la base de datos.
+  void acceptUser(UserRegister user) 
+  {
+    pendingUsers.remove(user);
     notifyListeners();
   }
 }

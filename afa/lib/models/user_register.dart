@@ -24,4 +24,18 @@ class UserRegister
     this.isActivate = false
     }
   );
+
+  factory UserRegister.fromMap(Map<String, dynamic> data) {
+    return UserRegister(
+      mail: data['mail'] ?? '',
+      username: data['username'] ?? '',
+      password: data['password'] ?? '',
+      name: data['name'] ?? '',
+      surnames: data['surnames'] ?? '',
+      address: data['address'] ?? '',
+      phoneNumber: data['phoneNumber'] ?? '',
+      rol: data['rol'] ?? '',
+      isActivate: data['isActivate'] ?? false,
+    );
+  }
 }

@@ -56,6 +56,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '253008576813',
     projectId: 'afa-jandula',
     authDomain: 'afa-jandula.firebaseapp.com',
+    databaseURL: 'https://afa-jandula-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'afa-jandula.firebasestorage.app',
     measurementId: 'G-7BQ9J990JB',
   );

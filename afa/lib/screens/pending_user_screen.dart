@@ -1,3 +1,4 @@
+import 'package:afa/path/path_url_afa.dart';
 import 'package:afa/providers/user_request_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -16,25 +17,25 @@ class PendingUsersScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.lightBlue[100],
       appBar: AppBar(
-          backgroundColor: const Color(0xFF063970),
-          elevation: 2,
-          shadowColor: Colors.black26,
-          leadingWidth: 150,
-          leading: TextButton.icon(
-            onPressed: () => context.go('/'),
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            label: const FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                'Volver al inicio',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 25,
-                ),
+        backgroundColor: const Color(0xFF063970),
+        elevation: 2,
+        shadowColor: Colors.black26,
+        leadingWidth: 150,
+        leading: TextButton.icon(
+          onPressed: () => context.go(PathUrlAfa().pathWelcome),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          label: const FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              'Volver al inicio',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 25,
               ),
             ),
           ),
         ),
+      ),
       body: Consumer<UserRequestProvider>(
         builder: (context, userRequestProvider, _) {
           final pendingUsers = userRequestProvider.pendingUsers;
@@ -51,21 +52,40 @@ class PendingUsersScreen extends StatelessWidget {
               child: Container(
                 width: containerWidth,
                 margin: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 15,
-                      offset: Offset(0, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Título encima de los contenedores de usuarios
+                    const Center(
+                      child: Text(
+                        'Usuarios pendientes de aprobar',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF063970),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 15,
+                            offset: Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: pendingUsers
+                            .map((user) => _buildUserCard(context, user))
+                            .toList(),
+                      ),
                     ),
                   ],
-                ),
-                child: Column(
-                  children: pendingUsers
-                      .map((user) => _buildUserCard(context, user))
-                      .toList(),
                 ),
               ),
             ),
@@ -86,12 +106,12 @@ class PendingUsersScreen extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // Si el ancho de la tarjeta es mayor a 400, se muestra la información en dos columnas.
+            // Para anchos mayores a 400 se muestra en dos columnas
             if (constraints.maxWidth > 400) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Fila superior con dos columnas de información
+                  // Información del usuario en dos columnas
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -140,7 +160,7 @@ class PendingUsersScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  // Botones de acción
+                  // Botones de acción: Aceptar, Editar y Eliminar
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -161,9 +181,21 @@ class PendingUsersScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 20),
                       ElevatedButton.icon(
+                        onPressed: () => _showEditUserDialog(context, user),
+                        icon: const Icon(Icons.edit, color: Colors.white),
+                        label: const SizedBox.shrink(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange[700],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.all(16),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      ElevatedButton.icon(
                         onPressed: () {
-                          Provider.of<UserRequestProvider>(context, listen: false)
-                              .deleteUser(user);
+                          // Acción para eliminar el usuario pendiente
                         },
                         icon: const Icon(Icons.delete, color: Colors.white),
                         label: const SizedBox.shrink(),
@@ -180,7 +212,7 @@ class PendingUsersScreen extends StatelessWidget {
                 ],
               );
             } else {
-              // Para anchos pequeños, se muestra la información en columna.
+              // Para anchos pequeños se muestra la información en columna
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -236,9 +268,21 @@ class PendingUsersScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 20),
                       ElevatedButton.icon(
+                        onPressed: () => _showEditUserDialog(context, user),
+                        icon: const Icon(Icons.edit, color: Colors.white),
+                        label: const SizedBox.shrink(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange[700],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.all(16),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      ElevatedButton.icon(
                         onPressed: () {
-                          Provider.of<UserRequestProvider>(context, listen: false)
-                              .deleteUser(user);
+                          // Acción para eliminar el usuario pendiente
                         },
                         icon: const Icon(Icons.delete, color: Colors.white),
                         label: const SizedBox.shrink(),
@@ -258,6 +302,111 @@ class PendingUsersScreen extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+
+  // Diálogo de edición con contenedor más grande y colores coherentes con la página
+  void _showEditUserDialog(BuildContext context, UserRegister user) {
+    final nameController = TextEditingController(text: user.name);
+    final surnamesController = TextEditingController(text: user.surnames);
+    final usernameController = TextEditingController(text: user.username);
+    final emailController = TextEditingController(text: user.mail);
+    final phoneController = TextEditingController(text: user.phoneNumber);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.lightBlue[50],
+          title: const Text("Editar usuario"),
+          content: SizedBox(
+            width: 400, // Contenedor más grande para la edición
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: InputDecoration(
+                      labelText: "Nombre",
+                      filled: true,
+                      fillColor: Colors.lightBlue[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: surnamesController,
+                    decoration: InputDecoration(
+                      labelText: "Apellidos",
+                      filled: true,
+                      fillColor: Colors.lightBlue[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: usernameController,
+                    decoration: InputDecoration(
+                      labelText: "Username",
+                      filled: true,
+                      fillColor: Colors.lightBlue[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: emailController,
+                    decoration: InputDecoration(
+                      labelText: "Correo electrónico",
+                      filled: true,
+                      fillColor: Colors.lightBlue[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: phoneController,
+                    decoration: InputDecoration(
+                      labelText: "Teléfono",
+                      filled: true,
+                      fillColor: Colors.lightBlue[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text("Cancelar"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // Implementar lógica de guardado, por ejemplo mediante el provider.
+                print("Usuario actualizado: ${nameController.text}, ${surnamesController.text}, ${usernameController.text}, ${emailController.text}, ${phoneController.text}");
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange[700],
+              ),
+              child: const Text("Guardar"),
+            ),
+          ],
+        );
+      },
     );
   }
 }

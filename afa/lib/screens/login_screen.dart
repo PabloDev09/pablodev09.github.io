@@ -10,48 +10,57 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  bool _isPasswordVisible = false; // Controla la visibilidad de la contraseña
+  // Controladores para los campos
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  // Controla la visibilidad de la contraseña
+  bool _isPasswordVisible = false;
+
+  // Key para manejar el estado del formulario
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double containerWidth = screenWidth * 0.9 > 500 ? 500 : screenWidth * 0.9;
+    final double containerWidth =
+        screenWidth * 0.9 > 700 ? 700 : screenWidth * 0.9;
 
-    return Theme(
-      data: Theme.of(context).copyWith(
-        textSelectionTheme: const TextSelectionThemeData(
-          cursorColor: Colors.blue,
-          selectionColor: Colors.blueAccent,
-          selectionHandleColor: Colors.blue,
-        ),
-      ),
-      child: Scaffold(
-        backgroundColor: Colors.lightBlue[100],
-
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF063970),
-          elevation: 2,
-          shadowColor: Colors.black26,
-          leadingWidth: 150,
-          leading: TextButton.icon(
-            onPressed: () => context.go('/'),
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            label: const FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text
-              (
-                'Volver al inicio',
-                style: TextStyle(color: Colors.white, fontSize: 25),
+    return Scaffold(
+      backgroundColor: Colors.lightBlue[100],
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF063970),
+        elevation: 2,
+        shadowColor: Colors.black26,
+        leadingWidth: 150,
+        leading: TextButton.icon(
+          onPressed: () => context.go('/'),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          label: const FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              'Volver al inicio',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 25,
               ),
             ),
           ),
         ),
-
-        body: Center(
-          child: SingleChildScrollView(
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 20.0),
+          child: Center(
             child: Container(
               width: containerWidth,
-              // Contenedor principal con radio y sombra
               decoration: BoxDecoration(
                 color: Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
@@ -63,79 +72,116 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ],
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // PARTE SUPERIOR: título con fondo azul
-                  Container(
-                    width: double.infinity,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF063970),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(20),
-                        topRight: Radius.circular(20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // PARTE SUPERIOR: Fondo azul con título
+                    Container(
+                      width: double.infinity,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF063970),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(20),
+                          topRight: Radius.circular(20),
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(20),
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'Iniciar Sesión',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                    padding: const EdgeInsets.all(20),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'Iniciar Sesión',
-                      style: TextStyle(
-                        color: Colors.white, // Texto en blanco
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
 
-                  // PARTE INFERIOR: campos y botón, con esquinas redondeadas en la parte inferior
-                  Container(
-                    width: double.infinity,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(20),
-                        bottomRight: Radius.circular(20),
+                    // PARTE INFERIOR: Fondo blanco con campos y botón
+                    Container(
+                      width: double.infinity,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(20),
+                          bottomRight: Radius.circular(20),
+                        ),
                       ),
-                    ),
-                    padding: const EdgeInsets.all(30),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildTextField('Usuario'),
-                        const SizedBox(height: 15),
-                        _buildPasswordField(),
-                        const SizedBox(height: 20),
+                      padding: const EdgeInsets.all(30),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Campo de usuario
+                          _buildFloatingTextField(
+                            label: 'Usuario',
+                            hint: 'Ingresa tu usuario',
+                            controller: _usernameController,
+                          ),
+                          const SizedBox(height: 15),
 
-                        ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue[900],
-                            padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 18),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                          // Campo de contraseña
+                          _buildFloatingPasswordField(),
+                          const SizedBox(height: 20),
+
+                          // Botón de iniciar sesión
+                          Center(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                if (_formKey.currentState!.validate()) {
+                                  // Lógica de login
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Campos válidos. Iniciando sesión...'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue[900],
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 50,
+                                  vertical: 18,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                'Iniciar sesión',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                ),
+                              ),
                             ),
                           ),
-                          child: const Text(
-                            'Iniciar sesión',
-                            style: TextStyle(color: Colors.white, fontSize: 18),
-                          ),
-                        ),
-                        const SizedBox(height: 15),
+                          const SizedBox(height: 15),
 
-                        TextButton(
-                          onPressed: () {
-                            context.go(PathUrlAfa().pathRegister);
-                          },
-                          child: const Text(
-                            '¿No tienes cuenta? Regístrate',
-                            style: TextStyle(color: Colors.blue, fontSize: 16),
+                          // Texto para ir al registro
+                          Center(
+                            child: TextButton(
+                              onPressed: () {
+                                context.go(PathUrlAfa().pathRegister);
+                              },
+                              child: const Text(
+                                '¿No tienes cuenta? Regístrate',
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -144,51 +190,51 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // Campo de texto estándar
-  Widget _buildTextField(String hint) {
-    return TextField(
+  // -------------------------------------------------------------------------
+  //                  CAMPOS CON LABEL FLOTANTE (SIEMPRE VISIBLE)
+  // -------------------------------------------------------------------------
+
+  /// Campo de texto con label flotante siempre visible y validación de campo vacío.
+  Widget _buildFloatingTextField({
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+  }) {
+    return TextFormField(
+      controller: controller,
       cursorColor: Colors.blue,
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'Este campo no puede estar vacío';
+        }
+        return null;
+      },
       decoration: InputDecoration(
+        labelText: label,
         hintText: hint,
-        filled: true,
-        fillColor: Colors.grey[200],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.blue, width: 2),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.grey),
-        ),
+        floatingLabelBehavior: FloatingLabelBehavior.always,
+        border: const OutlineInputBorder(),
       ),
     );
   }
 
-  // Campo de contraseña con icono para mostrar/ocultar
-  Widget _buildPasswordField() {
-    return TextField(
+  /// Campo de contraseña con label flotante, validación y un ícono para mostrar/ocultar.
+  Widget _buildFloatingPasswordField() {
+    return TextFormField(
+      controller: _passwordController,
       cursorColor: Colors.blue,
       obscureText: !_isPasswordVisible,
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'Este campo no puede estar vacío';
+        }
+        return null;
+      },
       decoration: InputDecoration(
-        hintText: 'Contraseña',
-        filled: true,
-        fillColor: Colors.grey[200],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.blue, width: 2),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.grey),
-        ),
+        labelText: 'Contraseña',
+        hintText: 'Ingresa tu contraseña',
+        floatingLabelBehavior: FloatingLabelBehavior.always,
+        border: const OutlineInputBorder(),
         suffixIcon: IconButton(
           icon: Icon(
             _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
