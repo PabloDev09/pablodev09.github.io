@@ -17,7 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   // Controla la visibilidad de la contraseña
   bool _isPasswordVisible = false;
 
-  // Key para manejar el estado del formulario
+  // Key para el formulario
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -30,8 +30,13 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double containerWidth =
-        screenWidth * 0.9 > 700 ? 700 : screenWidth * 0.9;
+    final double screenHeight = MediaQuery.of(context).size.height;
+    // Definimos anchos fijos para formulario e imagen y un espacio mínimo
+    const double formWidth = 700;
+    const double imageWidth = 300;
+    const double spacing = 40;
+    // Usamos layout en fila solo si el ancho disponible es suficiente
+    final bool isLargeScreen = screenWidth >= (formWidth + imageWidth + spacing);
 
     return Scaffold(
       backgroundColor: Colors.lightBlue[100],
@@ -47,141 +52,78 @@ class _LoginScreenState extends State<LoginScreen> {
             fit: BoxFit.scaleDown,
             child: Text(
               'Volver al inicio',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 25,
-              ),
+              style: TextStyle(color: Colors.white, fontSize: 25),
             ),
           ),
         ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(vertical: 20.0),
-          child: Center(
-            child: Container(
-              width: containerWidth,
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 15,
-                    offset: Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // PARTE SUPERIOR: Fondo azul con título
-                    Container(
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF063970),
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(20),
-                          topRight: Radius.circular(20),
+          // Se envuelve el contenido en un ConstrainedBox con minHeight igual a la altura de la pantalla
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: screenHeight),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20.0),
+                child: isLargeScreen
+                    ? Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Formulario (a la izquierda)
+                            Container(
+                              width: formWidth,
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Colors.black26,
+                                    blurRadius: 15,
+                                    offset: Offset(0, 10),
+                                  ),
+                                ],
+                              ),
+                              child: _buildLoginForm(),
+                            ),
+                            // Imagen (a la derecha)
+                            Image.asset(
+                              'assets/images/logo.png',
+                              width: imageWidth,
+                              fit: BoxFit.contain,
+                            ),
+                          ],
                         ),
-                      ),
-                      padding: const EdgeInsets.all(20),
-                      alignment: Alignment.center,
-                      child: const Text(
-                        'Iniciar Sesión',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-
-                    // PARTE INFERIOR: Fondo blanco con campos y botón
-                    Container(
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(20),
-                          bottomRight: Radius.circular(20),
-                        ),
-                      ),
-                      padding: const EdgeInsets.all(30),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // Campo de usuario
-                          _buildFloatingTextField(
-                            label: 'Usuario',
-                            hint: 'Ingresa tu usuario',
-                            controller: _usernameController,
+                          Container(
+                            width: screenWidth * 0.9,
+                            decoration: BoxDecoration(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 15,
+                                  offset: Offset(0, 10),
+                                ),
+                              ],
+                            ),
+                            child: _buildLoginForm(),
                           ),
-                          const SizedBox(height: 15),
-
-                          // Campo de contraseña
-                          _buildFloatingPasswordField(),
                           const SizedBox(height: 20),
-
-                          // Botón de iniciar sesión
-                          Center(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                if (_formKey.currentState!.validate()) {
-                                  // Lógica de login
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Campos válidos. Iniciando sesión...'),
-                                      backgroundColor: Colors.green,
-                                    ),
-                                  );
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue[900],
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 50,
-                                  vertical: 18,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Text(
-                                'Iniciar sesión',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 15),
-
-                          // Texto para ir al registro
-                          Center(
-                            child: TextButton(
-                              onPressed: () {
-                                context.go(PathUrlAfa().pathRegister);
-                              },
-                              child: const Text(
-                                '¿No tienes cuenta? Regístrate',
-                                style: TextStyle(
-                                  color: Colors.blue,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
+                          Image.asset(
+                            'assets/images/logo.png',
+                            width: imageWidth,
+                            fit: BoxFit.contain,
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
               ),
             ),
           ),
@@ -190,11 +132,116 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // -------------------------------------------------------------------------
-  //                  CAMPOS CON LABEL FLOTANTE (SIEMPRE VISIBLE)
-  // -------------------------------------------------------------------------
+  Widget _buildLoginForm() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // PARTE SUPERIOR: Fondo azul con título
+          Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              color: Color(0xFF063970),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            padding: const EdgeInsets.all(20),
+            alignment: Alignment.center,
+            child: const Text(
+              'Iniciar Sesión',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          // PARTE INFERIOR: Fondo blanco con campos y botón
+          Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+            ),
+            padding: const EdgeInsets.all(30),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Campo de usuario
+                _buildFloatingTextField(
+                  label: 'Usuario',
+                  hint: 'Ingresa tu usuario',
+                  controller: _usernameController,
+                ),
+                const SizedBox(height: 15),
+                // Campo de contraseña
+                _buildFloatingPasswordField(),
+                const SizedBox(height: 20),
+                // Botón de iniciar sesión
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Campos válidos. Iniciando sesión...'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue[900],
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 50,
+                        vertical: 18,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Iniciar sesión',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 15),
+                // Texto para ir al registro
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      context.go(PathUrlAfa().pathRegister);
+                    },
+                    child: const Text(
+                      '¿No tienes cuenta? Regístrate',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  /// Campo de texto con label flotante siempre visible y validación de campo vacío.
+  // Campo de texto con label flotante
   Widget _buildFloatingTextField({
     required String label,
     required String hint,
@@ -218,7 +265,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  /// Campo de contraseña con label flotante, validación y un ícono para mostrar/ocultar.
+  // Campo de contraseña con label flotante y control de visibilidad
   Widget _buildFloatingPasswordField() {
     return TextFormField(
       controller: _passwordController,
