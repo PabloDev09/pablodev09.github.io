@@ -1,8 +1,9 @@
-import 'package:afa/path/path_url_afa.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:afa/providers/user_register_provider.dart';
+import 'package:afa/path/path_url_afa.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -13,6 +14,7 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   bool _isPasswordVisible = false;
+  bool _termsAccepted = false;
   final _formKey = GlobalKey<FormState>();
 
   // Controladores para los campos de texto
@@ -36,6 +38,110 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _streetController.dispose();
     _postalCodeController.dispose();
     super.dispose();
+  }
+
+  Future<Position?> _requestLocationPermission() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Verificar si el servicio de ubicación está activado
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('El servicio de ubicación está desactivado.')),
+      );
+      return null;
+    }
+
+    // Verificar el estado de los permisos
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Los permisos de ubicación fueron denegados.')),
+        );
+        return null;
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Los permisos de ubicación están permanentemente denegados.')),
+      );
+      return null;
+    }
+    // Si se conceden los permisos, obtenemos la ubicación
+    return await Geolocator.getCurrentPosition();
+  }
+
+  void _registerUser(RegisterProvider registerProvider) async {
+    if (!_termsAccepted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Debes aceptar los términos y condiciones.')),
+      );
+      return;
+    }
+    if (_formKey.currentState!.validate()) {
+      // Solicitar permisos de ubicación y obtener la posición
+      Position? position = await _requestLocationPermission();
+      if (position == null) return;
+      
+      // Construir la dirección combinada
+      String address = registerProvider.joinAddress(
+        _streetController.text,
+        registerProvider.selectedCity ?? "",
+        registerProvider.selectedProvince ?? "",
+        _postalCodeController.text,
+      );
+      try {
+        await registerProvider.registerUser(
+          mail: _mailController.text,
+          username: _usernameController.text,
+          password: _passwordController.text,
+          name: _nameController.text,
+          surnames: _surnamesController.text,
+          address: address,
+          phoneNumber: _phoneController.text,
+        );
+        showSubmittedDialog(context);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al registrar: $e')),
+        );
+      }
+    }
+  }
+
+  void _showSubmittedDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: Colors.white,
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.blue),
+              SizedBox(width: 10),
+              Text('Formulario enviado'),
+            ],
+          ),
+          content: const Text(
+            'Tu solicitud ha sido enviada al administrador. ¡Gracias!',
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.blue),
+              child: const Text('Aceptar'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -63,10 +169,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             fit: BoxFit.scaleDown,
             child: Text(
               'Volver al inicio',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 25,
-              ),
+              style: TextStyle(color: Colors.white, fontSize: 25),
             ),
           ),
         ),
@@ -181,7 +284,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Correo Electrónico
                 _buildFloatingTextField(
                   label: 'Correo Electrónico',
                   hint: 'ejemplo@correo.com',
@@ -198,7 +300,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 15),
-                // Usuario
                 _buildFloatingTextField(
                   label: 'Usuario',
                   hint: 'cartogar64',
@@ -211,10 +312,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 15),
-                // Contraseña
                 _buildFloatingPasswordField(_passwordController, registerProvider),
                 const SizedBox(height: 20),
-                // Datos Personales
                 const Text(
                   'Datos Personales',
                   style: TextStyle(
@@ -224,7 +323,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                // Nombre
                 _buildFloatingTextField(
                   label: 'Nombre',
                   hint: 'Carlos',
@@ -237,7 +335,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 15),
-                // Apellidos
                 _buildFloatingTextField(
                   label: 'Apellidos',
                   hint: 'Toril García',
@@ -250,7 +347,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 15),
-                // Teléfono
                 _buildFloatingTextField(
                   label: 'Teléfono',
                   hint: '645323211',
@@ -267,7 +363,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                // Dirección
                 const Text(
                   'Dirección',
                   style: TextStyle(
@@ -277,7 +372,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                // Calle y Código Postal
                 Row(
                   children: [
                     Expanded(
@@ -314,7 +408,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ],
                 ),
                 const SizedBox(height: 15),
-                // Provincia y Ciudad
                 Row(
                   children: [
                     Expanded(
@@ -359,52 +452,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
+                // Checkbox de términos y condiciones
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _termsAccepted,
+                      onChanged: (value) {
+                        setState(() {
+                          _termsAccepted = value ?? false;
+                        });
+                      },
+                    ),
+                    const Expanded(
+                      child: Text(
+                        'Acepto los términos y condiciones',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
                 // Botón de registro
                 Center(
                   child: ElevatedButton(
                     onPressed: () async {
-                      if (_formKey.currentState!.validate()) {
-                        // Construir la dirección combinada
-                        String address = registerProvider.joinAddress(
-                          _streetController.text,
-                          registerProvider.selectedCity ?? "",
-                          registerProvider.selectedProvince ?? "",
-                          _postalCodeController.text,
-                        );
-                        try {
-                          await registerProvider.registerUser(
-                            mail: _mailController.text,
-                            username: _usernameController.text,
-                            password: _passwordController.text,
-                            name: _nameController.text,
-                            surnames: _surnamesController.text,
-                            address: address,
-                            phoneNumber: _phoneController.text,
-                          );
-                          _showSubmittedDialog(context);
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error al registrar: $e')),
-                          );
-                        }
-                      }
+                      _registerUser(registerProvider);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue[900],
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 50,
-                        vertical: 18,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 18),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     child: const Text(
                       'Registrarse',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                      ),
+                      style: TextStyle(color: Colors.white, fontSize: 18),
                     ),
                   ),
                 ),
@@ -417,10 +500,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     },
                     child: const Text(
                       '¿Ya tienes cuenta? Inicia sesión',
-                      style: TextStyle(
-                        color: Colors.blue,
-                        fontSize: 16,
-                      ),
+                      style: TextStyle(color: Colors.blue, fontSize: 16),
                     ),
                   ),
                 ),
@@ -432,15 +512,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // Diálogo de confirmación
-  void _showSubmittedDialog(BuildContext context) {
+  void showSubmittedDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           backgroundColor: Colors.white,
           title: const Row(
             children: [
@@ -458,9 +535,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               onPressed: () {
                 Navigator.pop(context);
               },
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.blue,
-              ),
+              style: TextButton.styleFrom(foregroundColor: Colors.blue),
               child: const Text('Aceptar'),
             ),
           ],
@@ -469,7 +544,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // Campo de texto con label flotante
   Widget _buildFloatingTextField({
     required String label,
     required String hint,
@@ -491,7 +565,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // Campo de contraseña con label flotante
   Widget _buildFloatingPasswordField(TextEditingController controller, RegisterProvider registerProvider) {
     return TextFormField(
       controller: controller,
@@ -503,7 +576,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
         if (!registerProvider.isSecurePassword(value)) {
           return "La contraseña no es segura. Debe tener al menos 8 caracteres, \n"
-              "incluir mayúsculas, minúsculas, dígitos y un carácter especial.";
+                 "incluir mayúsculas, minúsculas, dígitos y un carácter especial.";
         }
         return null;
       },
@@ -527,7 +600,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // Dropdown con label flotante
   Widget _buildFloatingDropdown({
     required String label,
     required String hint,
