@@ -1,4 +1,4 @@
-class UserRegister 
+class User 
 {
   final String mail;
   final String username;
@@ -10,7 +10,7 @@ class UserRegister
   final String rol;
   final bool isActivate;
   
-  const UserRegister
+  const User
   (
     {
     required this.mail, 
@@ -25,8 +25,8 @@ class UserRegister
     }
   );
 
-  factory UserRegister.fromMap(Map<String, dynamic> data) {
-    return UserRegister(
+  factory User.fromMap(Map<String, dynamic> data) {
+    return User(
       mail: data['mail'] ?? '',
       username: data['username'] ?? '',
       password: data['password'] ?? '',

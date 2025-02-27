@@ -1,9 +1,8 @@
-import 'package:afa/screens/dashboard_screen.dart';
-import 'package:afa/screens/login_screen.dart';
-import 'package:afa/screens/not_found_screen.dart';
-import 'package:afa/screens/pending_user_screen.dart';
-import 'package:afa/screens/register_screen.dart';
-import 'package:afa/screens/welcome_screen.dart';
+import 'package:afa/design/screens/dashboard_screen.dart';
+import 'package:afa/design/screens/login_screen.dart';
+import 'package:afa/design/screens/not_found_screen.dart';
+import 'package:afa/design/screens/register_screen.dart';
+import 'package:afa/design/screens/welcome_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 
@@ -34,15 +33,10 @@ final GoRouter afaRouter = GoRouter(
       path: '/dashboard',
       name: 'dashboard',
       builder: (context, state) => const DashboardScreen(),
-      redirect: (context, state) {
-        if (!isAuthenticated()) return '/login';
-        return null;
-      },
-    ),
-    GoRoute(
-      path: '/pending',
-      name: 'pending',
-      builder: (context, state) => const PendingUsersScreen(),
+//      redirect: (context, state) {
+//       if (!isAuthenticated()) return '/login';
+//       return null;
+//     },
     ),
   ],
   errorBuilder: (context, state) => const NotFoundScreen(),

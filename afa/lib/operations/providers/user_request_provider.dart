@@ -1,12 +1,12 @@
-import 'package:afa/services/user_service.dart';
+import 'package:afa/operations/services/user_service.dart';
 import 'package:flutter/material.dart';
-import 'package:afa/models/user_register.dart';
+import 'package:afa/operations/models/user.dart';
 
 class UserRequestProvider extends ChangeNotifier 
 {
   final UserService userService = UserService();
-  List<UserRegister> pendingUsers = [
-    const UserRegister(
+  List<User> pendingUsers = [
+    const User(
       mail: 'juan@example.com',
       username: 'juan123',
       password: 'password1',
@@ -17,7 +17,7 @@ class UserRequestProvider extends ChangeNotifier
       rol: 'user',
       isActivate: false,
     ),
-    const UserRegister(
+    const User(
       mail: 'ana@example.com',
       username: 'ana456',
       password: 'password2',
@@ -33,11 +33,11 @@ class UserRequestProvider extends ChangeNotifier
   Future<void> chargeUsers() async
   {
 
-    List<UserRegister> users = await userService.getUsers();
+    List<User> users = await userService.getUsers();
 
-    for(UserRegister user in users)
+    for(User user in users)
     {
-      if(user.mail.trim().isNotEmpty)
+      if(user.mail.trim().isNotEmpty && !user.isActivate)
       {
         pendingUsers.add(user);
       }
@@ -47,7 +47,7 @@ class UserRequestProvider extends ChangeNotifier
     notifyListeners();
   }
 
-  void acceptUser(UserRegister user) 
+  void acceptUser(User user) 
   {
     pendingUsers.remove(user);
     notifyListeners();

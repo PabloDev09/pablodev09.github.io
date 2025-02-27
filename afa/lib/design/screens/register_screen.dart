@@ -1,8 +1,8 @@
-import 'package:afa/path/path_url_afa.dart';
+import 'package:afa/operations/router/path/path_url_afa.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:afa/providers/user_register_provider.dart';
+import 'package:afa/operations/providers/user_register_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -40,7 +40,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final registerProvider = Provider.of<RegisterProvider>(context);
+    final registerProvider = Provider.of<UserRegisterProvider>(context);
     final double screenWidth = MediaQuery.of(context).size.width;
     final double containerWidth =
         screenWidth * 0.9 > 700 ? 700 : screenWidth * 0.9;
@@ -459,7 +459,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   /// Campo de contraseña con label flotante siempre visible.
-  Widget _buildFloatingPasswordField(TextEditingController controller, RegisterProvider registerProvider) {
+  Widget _buildFloatingPasswordField(TextEditingController controller, UserRegisterProvider registerProvider) {
     return TextFormField(
       controller: controller,
       cursorColor: Colors.blue,

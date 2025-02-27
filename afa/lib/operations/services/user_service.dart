@@ -1,5 +1,5 @@
 
-import 'package:afa/models/user_register.dart';
+import 'package:afa/operations/models/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserService
@@ -8,7 +8,7 @@ class UserService
 
   UserService();
 
-  Future<void> createUser(UserRegister userRegister) async
+  Future<void> createUser(User userRegister) async
   {
     CollectionReference collectionReferenceUsers = db.collection('usuarios');
 
@@ -28,16 +28,16 @@ class UserService
     );
   }
 
-  Future<List<UserRegister>> getUsers() async 
+  Future<List<User>> getUsers() async 
   {
-    List<UserRegister> usersRegister = [];
+    List<User> usersRegister = [];
     CollectionReference collectionReferenceUsers = db.collection('usuarios');
     QuerySnapshot queryUsers = await collectionReferenceUsers.get();
 
     for (var documento in queryUsers.docs) 
     {
       final data = documento.data() as Map<String, dynamic>;
-      final user = UserRegister.fromMap(data);
+      final user = User.fromMap(data);
       usersRegister.add(user);
     }
 

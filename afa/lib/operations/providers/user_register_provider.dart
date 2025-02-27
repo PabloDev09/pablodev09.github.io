@@ -1,11 +1,11 @@
-import 'package:afa/models/user_register.dart';
-import 'package:afa/helpers/get_provinces_cities.dart';
-import 'package:afa/services/user_service.dart';
+import 'package:afa/operations/models/user.dart';
+import 'package:afa/operations/helpers/get_provinces_cities.dart';
+import 'package:afa/operations/services/user_service.dart';
 import 'package:flutter/material.dart';
 
-class RegisterProvider extends ChangeNotifier {
+class UserRegisterProvider extends ChangeNotifier {
   
-  late UserRegister userRegister;
+  late User userRegister;
   final GetProvincesCities _getProvincesCities = GetProvincesCities();
   final UserService userService = UserService();
   
@@ -125,7 +125,7 @@ class RegisterProvider extends ChangeNotifier {
     required String phoneNumber,
   }) async {
     // Crea la instancia de UserRegister
-    userRegister = UserRegister(
+    userRegister = User(
       mail: mail,
       username: username,
       password: password,
