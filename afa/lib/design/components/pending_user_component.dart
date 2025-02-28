@@ -1,5 +1,5 @@
-import 'package:afa/operations/providers/user_request_provider.dart';
-import 'package:afa/operations/models/user.dart';
+import 'package:afa/logic/providers/user_request_provider.dart';
+import 'package:afa/logic/models/user.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

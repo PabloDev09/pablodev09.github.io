@@ -1,4 +1,4 @@
-import 'package:afa/operations/providers/user_active_provider.dart';
+import 'package:afa/logic/providers/user_active_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

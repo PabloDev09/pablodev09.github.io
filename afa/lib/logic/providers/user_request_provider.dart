@@ -1,6 +1,6 @@
-import 'package:afa/operations/services/user_service.dart';
+import 'package:afa/logic/services/user_service.dart';
 import 'package:flutter/material.dart';
-import 'package:afa/operations/models/user.dart';
+import 'package:afa/logic/models/user.dart';
 
 class UserRequestProvider extends ChangeNotifier 
 {

@@ -1,14 +1,15 @@
-import 'package:afa/operations/models/user.dart';
-import 'package:afa/operations/helpers/get_provinces_cities.dart';
-import 'package:afa/operations/services/user_service.dart';
+import 'package:afa/logic/models/user.dart';
+import 'package:afa/logic/helpers/get_provinces_cities.dart';
+import 'package:afa/logic/services/user_service.dart';
 import 'package:flutter/material.dart';
 
 class UserRegisterProvider extends ChangeNotifier {
-  
-  late User userRegister;
+  String errorMail = "";
+  String errorUser = "";
+  String? selectedProvince;
+  String? selectedCity;
   final GetProvincesCities _getProvincesCities = GetProvincesCities();
   final UserService userService = UserService();
-  
   final List<String> provincesNames = [
     'Almería',
     'Cádiz',
@@ -19,8 +20,7 @@ class UserRegisterProvider extends ChangeNotifier {
     'Málaga',
     'Sevilla'
   ];
-  
-  List<Map<String, String>> provinces = [
+  final List<Map<String, String>> provinces = [
     {"provincia": "Jaén", "codigoProvincia": "23"},
     {"provincia": "Granada", "codigoProvincia": "18"},
     {"provincia": "Almería", "codigoProvincia": "04"},
@@ -30,9 +30,7 @@ class UserRegisterProvider extends ChangeNotifier {
     {"provincia": "Huelva", "codigoProvincia": "21"},
     {"provincia": "Cádiz", "codigoProvincia": "11"},
   ];
-  
   List<String> cities = [];
-  
   List<String> domainMails = [
     "@gmail.com",
     "@yahoo.com",
@@ -47,9 +45,6 @@ class UserRegisterProvider extends ChangeNotifier {
     "@gmx.com",
     "@fastmail.com",
   ];
-  
-  String? selectedProvince;
-  String? selectedCity;
   
   // Actualiza la provincia seleccionada y carga las ciudades asociadas.
   void setSelectedProvince(String province) async {
@@ -83,38 +78,24 @@ class UserRegisterProvider extends ChangeNotifier {
     notifyListeners();
   }
   
+   /// Verifica si el correo electrónico tiene un dominio válido.
   bool isCorrectMail(String value) {
-    for (String domainMail in domainMails) {
-      if (value.endsWith(domainMail)) {
-        return true;
-      }
-    }
-    return false;
+    return domainMails.any((domain) => value.endsWith(domain));
   }
-  
+
+  /// Une la dirección con el formato adecuado.
   String joinAddress(String street, String city, String province, String postalCode) {
-    return "${street.trim()}, ${city.trim()}(${province.trim()}), ${postalCode.trim()}";
+    return "${street.trim()}, ${city.trim()} (${province.trim()}), ${postalCode.trim()}";
   }
 
-  /// Comprueba si la contraseña cumple con ciertos criterios de seguridad.
+  /// Comprueba si la contraseña cumple con criterios de seguridad.
   bool isSecurePassword(String password) {
-    // Ajusta los criterios según tus necesidades:
-    // 1) Longitud >= 8
-    // 2) Al menos una mayúscula
-    // 3) Al menos una minúscula
-    // 4) Al menos un dígito
-    // 5) Al menos un carácter especial (puedes modificar la lista de símbolos)
-    if (password.length < 8) return false;
-    if (!RegExp(r'[A-Z]').hasMatch(password)) return false;
-    if (!RegExp(r'[a-z]').hasMatch(password)) return false;
-    if (!RegExp(r'[0-9]').hasMatch(password)) return false;
-    if (!RegExp(r'[!@#\$%\^&\*\(\)\-\_\=\+{\}\[\]:;\"<>,\.\?\\/|`~]').hasMatch(password)) {
-      return false;
-    }
-    return true;
+    return RegExp(
+            r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#\$%\^&\*\(\)\-\_\=\+{\}\[\]:;\"<>,\.\?\\/|`~]).{8,}$')
+        .hasMatch(password);
   }
 
-  /// Método para crear el usuario y almacenarlo en la colección "usuarios" de Firestore.
+  /// Registra al usuario en la base de datos.
   Future<void> registerUser({
     required String mail,
     required String username,
@@ -124,8 +105,9 @@ class UserRegisterProvider extends ChangeNotifier {
     required String address,
     required String phoneNumber,
   }) async {
-    // Crea la instancia de UserRegister
-    userRegister = User(
+    _clearErrors();
+    
+    User userRegister = User(
       mail: mail,
       username: username,
       password: password,
@@ -134,9 +116,26 @@ class UserRegisterProvider extends ChangeNotifier {
       address: address,
       phoneNumber: phoneNumber,
     );
-  
-    await userService.createUser(userRegister);
 
+    try {
+      await userService.createUser(userRegister);
+    } catch (e) {
+      final errorMsg = e.toString();
+      if (errorMsg.contains("El correo ya existe")) {
+        errorMail = "El correo ya existe";
+      }
+      if (errorMsg.contains("El nombre de usuario ya existe")) {
+        errorUser = "El nombre de usuario ya existe";
+      }
+    }
     notifyListeners();
   }
+
+  void _clearErrors() 
+  {
+    errorMail = "";
+    errorUser = "";
+  }
 }
+
+

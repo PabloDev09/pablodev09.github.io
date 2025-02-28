@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:afa/operations/router/path/path_url_afa.dart';
+import 'package:afa/logic/router/path/path_url_afa.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -29,7 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  /// Iniciar sesión con Google usando `google_sign_in` y `firebase_auth`
+  /// Inicia sesión con Google usando google_sign_in y firebase_auth
   Future<void> _signInWithGoogle() async {
     try {
       // 1. Inicia el flujo de Google Sign-In
@@ -40,8 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       // 2. Obtiene la autenticación del usuario (tokens)
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
       // 3. Crea las credenciales para FirebaseAuth
       final credential = GoogleAuthProvider.credential(
@@ -60,117 +59,14 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al iniciar sesión con Google: $e'),
-          duration: const Duration(seconds: 1), // Duración corta
+          duration: const Duration(seconds: 1),
         ),
       );
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.lightBlue[100],
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF063970),
-        elevation: 2,
-        shadowColor: Colors.black26,
-        leadingWidth: 150,
-        leading: TextButton.icon(
-          onPressed: () => context.go('/'),
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          label: const FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              'Volver al inicio',
-              style: TextStyle(color: Colors.white, fontSize: 25),
-            ),
-          ),
-        ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          // Permite scroll si el contenido vertical es muy grande
-          child: Center(
-            child: Container(
-              // Limita el ancho máximo del formulario para pantallas grandes
-              constraints: const BoxConstraints(maxWidth: 600),
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  // Formulario (en una caja con sombra y esquinas redondeadas)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 15,
-                          offset: Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: _buildLoginForm(),
-                  ),
-                  const SizedBox(height: 30),
-
-                  // Botón de Google
-                  ElevatedButton.icon(
-                    onPressed: _signInWithGoogle,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black87,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 30,
-                        vertical: 14,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      side: const BorderSide(color: Colors.black12),
-                    ),
-                    icon: Image.asset(
-                      'assets/images/google_logo.png',
-                      height: 24,
-                    ),
-                    label: const Text(
-                      'Continuar con Google',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-
-                  // Logo debajo
-                  Image.asset(
-                    'assets/images/logo.png',
-                    width: 200,
-                    fit: BoxFit.contain,
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Texto "bonito"
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: Text(
-                      '¡Bienvenido! \nInicia sesión para disfrutar de todas las funciones.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Construye el formulario en un contenedor con encabezado y cuerpo
+  /// Construye el formulario de login, que incluye los botones "Iniciar sesión"
+  /// y "Continuar con Google" uno debajo del otro
   Widget _buildLoginForm() {
     return Form(
       key: _formKey,
@@ -210,55 +106,64 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             padding: const EdgeInsets.all(30),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Usuario
+                // Campo de usuario
                 _buildFloatingTextField(
                   label: 'Usuario',
                   hint: 'Ingresa tu usuario',
                   controller: _usernameController,
                 ),
                 const SizedBox(height: 15),
-                // Contraseña
+                // Campo de contraseña
                 _buildFloatingPasswordField(),
                 const SizedBox(height: 20),
-
-                // Botón de iniciar sesión
-                Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        // Lógica de login
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Campos válidos. Iniciando sesión...'),
-                            backgroundColor: Colors.green,
-                            duration: Duration(seconds: 1), // Duración corta
-                          ),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue[900],
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 50,
-                        vertical: 18,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Iniciar sesión',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                      ),
-                    ),
+                // Botón de Iniciar Sesión
+                ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Campos válidos. Iniciando sesión...'),
+                          backgroundColor: Colors.green,
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue[900],
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    minimumSize: const Size(double.infinity, 0),
+                  ),
+                  child: const Text(
+                    'Iniciar sesión',
+                    style: TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ),
                 const SizedBox(height: 15),
-
+                // Botón de Continuar con Google
+                ElevatedButton.icon(
+                  onPressed: _signInWithGoogle,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black87,
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    side: const BorderSide(color: Colors.black12),
+                    minimumSize: const Size(double.infinity, 0),
+                  ),
+                  icon: Image.asset(
+                    'assets/images/google_logo.png',
+                    height: 24,
+                  ),
+                  label: const Text(
+                    'Continuar con Google',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+                const SizedBox(height: 15),
                 // Link para ir al registro
                 Center(
                   child: TextButton(
@@ -267,10 +172,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                     child: const Text(
                       '¿No tienes cuenta? Regístrate',
-                      style: TextStyle(
-                        color: Colors.blue,
-                        fontSize: 16,
-                      ),
+                      style: TextStyle(color: Colors.blue, fontSize: 16),
                     ),
                   ),
                 ),
@@ -333,6 +235,117 @@ class _LoginScreenState extends State<LoginScreen> {
               _isPasswordVisible = !_isPasswordVisible;
             });
           },
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Layout responsivo: si el ancho es mayor o igual a 800, se usa Row
+    // con el formulario a la izquierda y el logo+texto a la derecha.
+    // En pantallas más pequeñas, el logo se posiciona debajo del formulario.
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isLargeScreen = screenWidth >= 800;
+    final double formAdaptiveWidth = isLargeScreen ? screenWidth * 0.45 : screenWidth * 0.9;
+    final double logoAdaptiveWidth = isLargeScreen ? screenWidth * 0.35 : screenWidth * 0.9;
+
+    return Scaffold(
+      backgroundColor: Colors.lightBlue[100],
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF063970),
+        elevation: 2,
+        shadowColor: Colors.black26,
+        leadingWidth: 150,
+        leading: TextButton.icon(
+          onPressed: () => context.go('/'),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          label: const FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              'Volver al inicio',
+              style: TextStyle(color: Colors.white, fontSize: 25),
+            ),
+          ),
+        ),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Center(
+            child: isLargeScreen
+                ? Container(
+                    width: screenWidth,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Formulario a la izquierda
+                        Container(
+                          width: formAdaptiveWidth,
+                          child: _buildLoginForm(),
+                        ),
+                        // Logo y texto de bienvenida a la derecha
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Image.asset(
+                              'assets/images/logo.png',
+                              width: logoAdaptiveWidth,
+                              fit: BoxFit.contain,
+                            ),
+                            const SizedBox(height: 20),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 10),
+                              child: Text(
+                                '¡Bienvenido!\nInicia sesión para disfrutar de todas las funciones.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  )
+                : Column(
+                    children: [
+                      Container(
+                        width: screenWidth * 0.9,
+                        child: _buildLoginForm(),
+                      ),
+                      const SizedBox(height: 20),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Image.asset(
+                            'assets/images/logo.png',
+                            width: logoAdaptiveWidth,
+                            fit: BoxFit.contain,
+                          ),
+                          const SizedBox(height: 20),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10),
+                            child: Text(
+                              '¡Bienvenido!\nInicia sesión para disfrutar de todas las funciones.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+          ),
         ),
       ),
     );

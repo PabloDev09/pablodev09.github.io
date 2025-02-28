@@ -1,5 +1,5 @@
-import 'package:afa/operations/providers/user_register_provider.dart';
-import 'package:afa/operations/router/path/path_url_afa.dart';
+import 'package:afa/logic/providers/user_register_provider.dart';
+import 'package:afa/logic/router/path/path_url_afa.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -15,6 +15,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   bool _isPasswordVisible = false;
   bool _termsAccepted = false;
+  bool _isLoading = false; // Controla el estado de carga
   final _formKey = GlobalKey<FormState>();
 
   // Controladores para los campos de texto
@@ -48,7 +49,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('El servicio de ubicación está desactivado.')),
+        const SnackBar(
+          content: Text('El servicio de ubicación está desactivado.'),
+          backgroundColor: Colors.red,
+        ),
       );
       return null;
     }
@@ -59,14 +63,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Los permisos de ubicación fueron denegados.')),
+          const SnackBar(
+            content: Text('Los permisos de ubicación fueron denegados.'),
+            backgroundColor: Colors.red,
+          ),
         );
         return null;
       }
     }
     if (permission == LocationPermission.deniedForever) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Los permisos de ubicación están permanentemente denegados.')),
+        const SnackBar(
+          content: Text(
+              'Los permisos de ubicación están permanentemente denegados.'),
+          backgroundColor: Colors.red,
+        ),
       );
       return null;
     }
@@ -77,15 +88,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _registerUser(UserRegisterProvider userRegisterProvider) async {
     if (!_termsAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Debes aceptar los términos y condiciones.')),
+        const SnackBar(
+          content: Text('Debes aceptar los términos y condiciones.'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+      // Espera 2 segundos para simular procesamiento y mostrar el indicador
+      await Future.delayed(const Duration(seconds: 2));
+
       // Solicitar permisos de ubicación y obtener la posición
       Position? position = await _requestLocationPermission();
-      if (position == null) return;
-      
+      if (position == null) {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
       // Construir la dirección combinada
       String address = userRegisterProvider.joinAddress(
         _streetController.text,
@@ -93,35 +118,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
         userRegisterProvider.selectedProvince ?? "",
         _postalCodeController.text,
       );
-      try {
-        await userRegisterProvider.registerUser(
-          mail: _mailController.text,
-          username: _usernameController.text,
-          password: _passwordController.text,
-          name: _nameController.text,
-          surnames: _surnamesController.text,
-          address: address,
-          phoneNumber: _phoneController.text,
-        );
+
+      await userRegisterProvider.registerUser(
+        mail: _mailController.text,
+        username: _usernameController.text,
+        password: _passwordController.text,
+        name: _nameController.text,
+        surnames: _surnamesController.text,
+        address: address,
+        phoneNumber: _phoneController.text,
+      );
+
+      // Revalida el formulario para que se muestren los errores (si existen)
+      _formKey.currentState!.validate();
+
+      // Si no se han generado errores en correo y usuario, el registro fue exitoso
+      if (userRegisterProvider.errorMail == "" &&
+          userRegisterProvider.errorUser == "") {
         showSubmittedDialog(context);
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al registrar: $e')),
-        );
+        // Limpiar todos los campos
+        _mailController.clear();
+        _usernameController.clear();
+        _passwordController.clear();
+        _nameController.clear();
+        _surnamesController.clear();
+        _phoneController.clear();
+        _streetController.clear();
+        _postalCodeController.clear();
       }
+
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
     final userRegisterProvider = Provider.of<UserRegisterProvider>(context);
     final double screenWidth = MediaQuery.of(context).size.width;
-    // Definimos anchos fijos:
+    // Anchos fijos para layout
     const double formWidth = 700;
     const double imageWidth = 300;
     const double spacing = 40;
-    // Usamos layout en fila solo si el ancho es suficiente para ambos elementos
     final bool isLargeScreen = screenWidth >= (formWidth + imageWidth + spacing);
 
     return Scaffold(
@@ -155,7 +194,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Formulario de registro (pegado a la izquierda)
+                        // Formulario de registro (izquierda)
                         Container(
                           width: formWidth,
                           decoration: BoxDecoration(
@@ -171,7 +210,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           child: _buildRegisterForm(userRegisterProvider),
                         ),
-                        // Imagen (pegada a la derecha)
+                        // Imagen (derecha)
                         Image.asset(
                           'assets/images/logo.png',
                           width: imageWidth,
@@ -239,7 +278,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
           ),
-          // Contenedor con los campos
+          // Contenedor de campos
           Container(
             width: double.infinity,
             decoration: const BoxDecoration(
@@ -265,6 +304,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     if (!userRegisterProvider.isCorrectMail(value)) {
                       return "Introduce un correo válido";
                     }
+                    if (userRegisterProvider.errorMail.trim() != "") {
+                      return userRegisterProvider.errorMail.trim();
+                    }
                     return null;
                   },
                 ),
@@ -277,11 +319,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     if (value == null || value.trim().isEmpty) {
                       return "Este campo es obligatorio";
                     }
+                    if (userRegisterProvider.errorUser.trim() != "") {
+                      return userRegisterProvider.errorUser.trim();
+                    }
                     return null;
                   },
                 ),
                 const SizedBox(height: 15),
-                _buildFloatingPasswordField(_passwordController, userRegisterProvider),
+                _buildFloatingPasswordField(
+                    _passwordController, userRegisterProvider),
                 const SizedBox(height: 20),
                 const Text(
                   'Datos Personales',
@@ -444,20 +490,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // Botón de registro
                 Center(
                   child: ElevatedButton(
-                    onPressed: () async {
-                      _registerUser(userRegisterProvider);
-                    },
+                    onPressed: _isLoading
+                        ? null
+                        : () async {
+                            _registerUser(userRegisterProvider);
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue[900],
-                      padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 18),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 50, vertical: 18),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
-                      'Registrarse',
-                      style: TextStyle(color: Colors.white, fontSize: 18),
-                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            'Registrarse',
+                            style: TextStyle(
+                                color: Colors.white, fontSize: 18),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 15),
@@ -476,7 +535,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ],
             ),
           ),
-        ],
+        ]
       ),
     );
   }
@@ -486,7 +545,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           backgroundColor: Colors.white,
           title: const Row(
             children: [
@@ -534,7 +594,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildFloatingPasswordField(TextEditingController controller, UserRegisterProvider userRegisterProvider) {
+  Widget _buildFloatingPasswordField(
+      TextEditingController controller, UserRegisterProvider userRegisterProvider) {
     return TextFormField(
       controller: controller,
       cursorColor: Colors.blue,
@@ -545,7 +606,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
         if (!userRegisterProvider.isSecurePassword(value)) {
           return "La contraseña no es segura. Debe tener al menos 8 caracteres, \n"
-                 "incluir mayúsculas, minúsculas, dígitos y un carácter especial.";
+              "incluir mayúsculas, minúsculas, dígitos y un carácter especial.";
         }
         return null;
       },
