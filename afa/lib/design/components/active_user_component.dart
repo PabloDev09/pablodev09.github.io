@@ -1,6 +1,6 @@
-import 'package:afa/logic/providers/user_active_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:afa/logic/providers/user_active_provider.dart';
 
 class ActiveUserComponent extends StatelessWidget {
   const ActiveUserComponent({super.key});
@@ -14,14 +14,14 @@ class ActiveUserComponent extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
             // Si NO hay usuarios, se muestra directamente el mensaje en el centro
             if (activeUsers.isEmpty)
               _buildNoUsersDirectly(context)
             else
               // Si HAY usuarios, se muestra la tabla dentro de un contenedor con sombra.
               _buildActiveUsersContainer(context, activeUsers),
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
           ],
         );
       },
@@ -33,51 +33,53 @@ class ActiveUserComponent extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return SizedBox(
-      height: screenHeight * 0.7, // 70% de la pantalla (ajusta según necesites)
-      child: const Center(
+      height: screenHeight * 0.7, // 70% de la pantalla
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Ícono principal (personas) con la X roja superpuesta
             SizedBox(
-              width: 100,
-              height: 100,
+              width: 120,
+              height: 120,
               child: Stack(
                 children: [
                   Align(
                     alignment: Alignment.center,
                     child: Icon(
-                      Icons.how_to_reg_rounded,
+                      Icons.people_alt_rounded,
                       size: 100,
-                      color: Colors.grey,
+                      color: Colors.grey[400],
                     ),
                   ),
-                  Align(
+                  const Align(
                     alignment: Alignment.center,
                     child: Icon(
-                      Icons.close,
+                      Icons.cancel_rounded,
                       size: 100,
-                      color: Colors.red,
+                      color: Colors.redAccent,
                     ),
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 16),
-            Text(
+            const SizedBox(height: 20),
+            const Text(
               'No hay usuarios activos',
               style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+                fontSize: 28,
+                fontWeight: FontWeight.w600,
                 color: Colors.black87,
+                fontFamily: 'Roboto',  // Fuente moderna
               ),
             ),
-            SizedBox(height: 8),
-            Text(
+            const SizedBox(height: 8),
+            const Text(
               'En cuanto existan usuarios activos se mostrarán aquí.',
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.black54,
+                fontFamily: 'Roboto',
               ),
               textAlign: TextAlign.center,
             ),
@@ -94,12 +96,13 @@ class ActiveUserComponent extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 1200),
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         decoration: BoxDecoration(
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: const [
             BoxShadow(
-              color: Colors.black26,
-              blurRadius: 8,
-              offset: Offset(0, 4),
+              color: Colors.black12,
+              blurRadius: 15,
+              offset: Offset(0, 5),
             ),
           ],
         ),
@@ -108,152 +111,57 @@ class ActiveUserComponent extends StatelessWidget {
     );
   }
 
-  /// Tabla con encabezado y filas (sin scroll horizontal: se escala en pantallas pequeñas)
+  /// Tabla con encabezado y filas
   Widget _buildActiveUsersTable(BuildContext context, List activeUsers) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(12), // Borde redondeado de la tabla
+      borderRadius: BorderRadius.circular(16), // Borde redondeado de la tabla
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // SINGLE SCROLL VERTICAL
           return SingleChildScrollView(
             scrollDirection: Axis.vertical,
             child: FittedBox(
-              // Ajusta la tabla para que quepa en el ancho disponible (scale down)
               fit: BoxFit.scaleDown,
               alignment: Alignment.topLeft,
               child: ConstrainedBox(
-                // Mínimo: todo el ancho de la zona disponible
                 constraints: BoxConstraints(minWidth: constraints.maxWidth),
                 child: DataTable(
-                  headingRowHeight: 0, // Ocultamos la cabecera automática
+                  headingRowHeight: 70, // Encabezados más altos para mejorar la legibilidad
                   columns: const [
-                    DataColumn(label: SizedBox()),
-                    DataColumn(label: SizedBox()),
-                    DataColumn(label: SizedBox()),
-                    DataColumn(label: SizedBox()),
-                    DataColumn(label: SizedBox()),
+                    DataColumn(label: Text('Nombre', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
+                    DataColumn(label: Text('Username', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
+                    DataColumn(label: Text('Correo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
+                    DataColumn(label: Text('Teléfono', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
+                    DataColumn(label: Text('Acciones', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
                   ],
                   rows: [
-                    // FILA DE ENCABEZADO
-                    DataRow(
-                      color: WidgetStateProperty.all(const Color(0xFF074D96)),
-                      cells: const [
-                        DataCell(
-                          Text(
-                            'Nombre',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            'Username',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            'Correo',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            'Teléfono',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            'Acciones',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    // FILAS DE DATOS
                     for (int i = 0; i < activeUsers.length; i++)
                       DataRow(
-                        // Color de fila con hover
- color: WidgetStateProperty.resolveWith<Color?>(
-                          (Set<WidgetState> states) {
-                            final hovered = states.contains(WidgetState.hovered);
-                            // Alternamos colores par/impar y cambiamos en hover
-                            if (i % 2 == 0) {
-                              // Fila par
-                              return hovered
-                                  ? const Color.fromARGB(255, 164, 215, 255) // hover
-                                  : const Color(0xFF95CFFF); // base
-                            } else {
-                              // Fila impar
-                              return hovered
-                                  ? const Color.fromARGB(255, 187, 224, 255) // hover
-                                  : const Color(0xFFB3DAFF); // base
-                            }
-                          },
-                        ),
+                        color: i % 2 == 0
+                            ? WidgetStateProperty.all(Colors.lightGreen[50]) // Fondo verde suave
+                            : WidgetStateProperty.all(Colors.blue[50]), // Fondo azul suave
                         cells: [
-                          DataCell(
-                            Text('${activeUsers[i].name} ${activeUsers[i].surnames}'),
-                          ),
-                          DataCell(
-                            Text(activeUsers[i].username),
-                          ),
-                          DataCell(
-                            Text(activeUsers[i].mail),
-                          ),
-                          DataCell(
-                            Text(activeUsers[i].phoneNumber),
-                          ),
+                          DataCell(Text('${activeUsers[i].name} ${activeUsers[i].surnames}', style: const TextStyle(fontSize: 16, fontFamily: 'Roboto'))),
+                          DataCell(Text(activeUsers[i].username, style: const TextStyle(fontSize: 16, fontFamily: 'Roboto'))),
+                          DataCell(Text(activeUsers[i].mail, style: const TextStyle(fontSize: 16, fontFamily: 'Roboto'))),
+                          DataCell(Text(activeUsers[i].phoneNumber, style: const TextStyle(fontSize: 16, fontFamily: 'Roboto'))),
                           DataCell(
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                // Botón editar (lápiz naranja con hover)
+                                // Botón editar
                                 IconButton(
                                   icon: const Icon(Icons.edit),
-                                  style: ButtonStyle(
-                                    iconSize: WidgetStateProperty.all(24),
-                                    foregroundColor: WidgetStateProperty.resolveWith<Color?>(
-                                      (states) {
-                                        if (states.contains(WidgetState.hovered)) {
-                                          return Colors.deepOrange;
-                                        }
-                                        return Colors.orange;
-                                      },
-                                    ),
-                                  ),
                                   onPressed: () => _editUser(context, activeUsers[i]),
+                                  tooltip: 'Editar usuario',
+                                  color: Colors.blueAccent,
                                 ),
-                                // Botón eliminar (papelera roja con hover)
+                                const SizedBox(width: 8),
+                                // Botón eliminar
                                 IconButton(
                                   icon: const Icon(Icons.delete),
-                                  style: ButtonStyle(
-                                    iconSize: WidgetStateProperty.all(24),
-                                    foregroundColor: WidgetStateProperty.resolveWith<Color?>(
-                                      (states) {
-                                        if (states.contains(WidgetState.hovered)) {
-                                          return Colors.redAccent;
-                                        }
-                                        return Colors.red;
-                                      },
-                                    ),
-                                  ),
                                   onPressed: () => _deleteUser(context, activeUsers[i]),
+                                  tooltip: 'Eliminar usuario',
+                                  color: Colors.redAccent,
                                 ),
                               ],
                             ),

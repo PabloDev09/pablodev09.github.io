@@ -1,4 +1,4 @@
-import 'package:afa/logic/providers/user_request_provider.dart';
+import 'package:afa/logic/providers/user_request_provider.dart'; 
 import 'package:afa/logic/models/user.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -11,17 +11,14 @@ class PendingUserComponentContent extends StatelessWidget {
     return Consumer<UserRequestProvider>(
       builder: (context, userRequestProvider, _) {
         final pendingUsers = userRequestProvider.pendingUsers;
-
         return Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(height: 20),
-            // Si no hay usuarios pendientes, muestra el mensaje grande centrado
             if (pendingUsers.isEmpty)
               _buildNoUsersDirectly(context)
             else
-              // Si hay usuarios pendientes, muestra la tabla en un contenedor
-              _buildPendingUsersContainer(context, pendingUsers),
+              _buildPendingUsersCards(context, pendingUsers),
             const SizedBox(height: 20),
           ],
         );
@@ -29,55 +26,30 @@ class PendingUserComponentContent extends StatelessWidget {
     );
   }
 
-  /// Muestra un mensaje grande centrado (horizontal y vertical) cuando no hay usuarios pendientes
   Widget _buildNoUsersDirectly(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-
+    double fontSize = MediaQuery.of(context).size.width * 0.02;
+    fontSize = fontSize.clamp(14, 18);
     return SizedBox(
-      height: screenHeight * 0.7, // Ocupa el 70% de la pantalla (ajusta según necesites)
-      child: const Center(
+      height: MediaQuery.of(context).size.height * 0.7,
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Ícono de personas con "X" roja superpuesta
-            SizedBox(
-              width: 100,
-              height: 100,
-              child: Stack(
-                children: [
-                  Align(
-                    alignment: Alignment.center,
-                    child: Icon(
-                      Icons.add_comment_rounded,
-                      size: 80,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.center,
-                    child: Icon(
-                      Icons.close,
-                      size: 100,
-                      color: Colors.red,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 16),
+            Icon(Icons.person_off, size: fontSize * 4, color: Colors.grey),
+            SizedBox(height: fontSize),
             Text(
               'No hay peticiones de registro',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: fontSize,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: fontSize * 0.5),
             Text(
               'En cuanto existan usuarios pendientes se mostrarán aquí.',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: fontSize * 0.9,
                 color: Colors.black54,
               ),
               textAlign: TextAlign.center,
@@ -88,264 +60,230 @@ class PendingUserComponentContent extends StatelessWidget {
     );
   }
 
-  /// Contenedor con sombra y bordes redondeados para la tabla de usuarios pendientes
-  Widget _buildPendingUsersContainer(BuildContext context, List<User> pendingUsers) {
-    return Center(
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 1200),
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 8,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: _buildPendingUsersTable(context, pendingUsers),
-      ),
+  Widget _buildPendingUsersCards(BuildContext context, List<User> pendingUsers) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = constraints.maxWidth < 600 ? 1 : 2;
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 8, 
+            mainAxisSpacing: 8,
+          ),
+          itemCount: pendingUsers.length,
+          itemBuilder: (context, index) {
+            return _buildUserContainer(context, pendingUsers[index]);
+          },
+        );
+      },
     );
   }
 
-  /// Tabla de usuarios pendientes que se redimensiona en pantallas pequeñas (sin scroll horizontal)
-  Widget _buildPendingUsersTable(BuildContext context, List<User> pendingUsers) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            scrollDirection: Axis.vertical, // Scroll vertical si excede la altura
-            child: FittedBox(
-              // Ajusta la tabla para que quepa en el ancho disponible
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.topLeft,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minWidth: constraints.maxWidth),
-                child: DataTable(
-                  headingRowHeight: 0, // Ocultamos cabecera automática
-                  columns: const [
-                    DataColumn(label: SizedBox()),
-                    DataColumn(label: SizedBox()),
-                    DataColumn(label: SizedBox()),
-                    DataColumn(label: SizedBox()),
-                    DataColumn(label: SizedBox()),
-                  ],
-                  rows: [
-                    // FILA 2: Encabezados de columnas
-                    DataRow(
-                      color: WidgetStateProperty.all(
-                        const Color(0xFF074D96),
-                      ),
-                      cells: const [
-                        DataCell(
-                          Text(
-                            'Nombre',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            'Username',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            'Correo',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            'Teléfono',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          Text(
-                            'Acciones',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    // FILAS DE DATOS (alternando colores y con hover)
-                    for (int i = 0; i < pendingUsers.length; i++)
-                      DataRow(
-                        color: WidgetStateProperty.resolveWith<Color?>(
-                          (Set<WidgetState> states) {
-                            final hovered = states.contains(WidgetState.hovered);
-                            // Alternamos colores par/impar y cambiamos en hover
-                            if (i % 2 == 0) {
-                              // Fila par
-                              return hovered
-                                  ? const Color.fromARGB(255, 164, 215, 255) // hover
-                                  : const Color(0xFF95CFFF); // base
-                            } else {
-                              // Fila impar
-                              return hovered
-                                  ? const Color.fromARGB(255, 187, 224, 255) // hover
-                                  : const Color(0xFFB3DAFF); // base
-                            }
-                          },
-                        ),
-                        cells: [
-                          DataCell(
-                            Text('${pendingUsers[i].name} ${pendingUsers[i].surnames}'),
-                          ),
-                          DataCell(
-                            Text(pendingUsers[i].username),
-                          ),
-                          DataCell(
-                            Text(pendingUsers[i].mail),
-                          ),
-                          DataCell(
-                            Text(pendingUsers[i].phoneNumber),
-                          ),
-                          DataCell(
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Botón de Aceptar (check verde con hover)
-                                IconButton(
-                                  icon: const Icon(Icons.check),
-                                  style: ButtonStyle(
-                                    iconSize: WidgetStateProperty.all(24),
-                                    foregroundColor: WidgetStateProperty.resolveWith<Color?>(
-                                      (states) {
-                                        if (states.contains(WidgetState.hovered)) {
-                                          return Colors.greenAccent;
-                                        }
-                                        return Colors.green;
-                                      },
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    Provider.of<UserRequestProvider>(context, listen: false)
-                                        .acceptUser(pendingUsers[i]);
-                                  },
-                                ),
-                                // Botón de Editar (lápiz naranja con hover)
-                                IconButton(
-                                  icon: const Icon(Icons.edit),
-                                  style: ButtonStyle(
-                                    iconSize: WidgetStateProperty.all(24),
-                                    foregroundColor: WidgetStateProperty.resolveWith<Color?>(
-                                      (states) {
-                                        if (states.contains(WidgetState.hovered)) {
-                                          return Colors.deepOrange;
-                                        }
-                                        return Colors.orange;
-                                      },
-                                    ),
-                                  ),
-                                  onPressed: () =>
-                                      _showEditUserDialog(context, pendingUsers[i]),
-                                ),
-                                // Botón de Eliminar (papelera roja con hover)
-                                IconButton(
-                                  icon: const Icon(Icons.delete),
-                                  style: ButtonStyle(
-                                    iconSize: WidgetStateProperty.all(24),
-                                    foregroundColor: WidgetStateProperty.resolveWith<Color?>(
-                                      (states) {
-                                        if (states.contains(WidgetState.hovered)) {
-                                          return Colors.redAccent;
-                                        }
-                                        return Colors.red;
-                                      },
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    // Acción para eliminar el usuario pendiente
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
+  Widget _buildUserContainer(BuildContext context, User user) {
+    double fontSize = MediaQuery.of(context).size.width * 0.025;
+    fontSize = fontSize.clamp(16, 20);
+    Map<IconData, Color> iconColors = {
+      Icons.person: Colors.blue.shade300,
+      Icons.email: Colors.green.shade300,
+      Icons.phone: Colors.orange.shade300,
+      Icons.location_on: Colors.red.shade300,
+    };
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          )
+        ],
+      ),
+      // Elimina o ajusta este margin si no quieres espacio entre contenedores
+      margin: EdgeInsets.zero,
+      // Padding mínimo para que no se pegue el contenido a los bordes
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        mainAxisSize: MainAxisSize.min, 
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${user.name} ${user.surnames}',
+                  style: TextStyle(
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
               ),
+              IconButton(
+                icon: const Icon(Icons.more_vert, color: Colors.black54),
+                onPressed: () {
+                  _showUserDetailsDialog(context, user);
+                },
+              ),
+            ],
+          ),
+          Text(
+            'Datos personales',
+            style: TextStyle(
+              fontSize: fontSize * 0.9,
+              color: Colors.black54,
+              fontStyle: FontStyle.italic,
             ),
-          );
-        },
+          ),
+          const Divider(),
+          _buildUserInfoRow(Icons.person, 'Usuario:', user.username, fontSize, iconColors),
+          _buildUserInfoRow(Icons.email, 'Email:', user.mail, fontSize, iconColors),
+          _buildUserInfoRow(Icons.phone, 'Teléfono:', user.phoneNumber, fontSize, iconColors),
+          _buildUserInfoRow(Icons.location_on, 'Dirección:', user.address, fontSize, iconColors),
+          _buildActionButtons(context, user),
+        ],
       ),
     );
   }
 
-  /// Diálogo de edición
-  void _showEditUserDialog(BuildContext context, User user) {
-    final nameController = TextEditingController(text: user.name);
-    final surnamesController = TextEditingController(text: user.surnames);
-    final usernameController = TextEditingController(text: user.username);
-    final emailController = TextEditingController(text: user.mail);
-    final phoneController = TextEditingController(text: user.phoneNumber);
+  Widget _buildUserInfoRow(IconData icon, String label, String value, double fontSize, Map<IconData, Color> iconColors) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: fontSize * 1.2, color: iconColors[icon]),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+              fontSize: fontSize,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                color: Colors.black54,
+                fontSize: fontSize * 0.95,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
+  Widget _buildActionButtons(BuildContext context, User user) {
+    double iconSize = MediaQuery.of(context).size.width * 0.06;
+    iconSize = iconSize.clamp(24, 30);
+    return Container(
+      width: double.infinity,
+      alignment: Alignment.bottomCenter,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF063970), Color(0xFF66B3FF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildIconButton(Icons.check, 'Aprobar', iconSize, () {
+            _showAssignRoleDialog(context, user);
+          }),
+          _buildIconButton(Icons.edit, 'Editar', iconSize, () {
+            _showEditUserDialog(context, user);
+          }),
+          _buildIconButton(Icons.delete, 'Rechazar', iconSize, () {}),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIconButton(IconData icon, String tooltip, double size, VoidCallback onPressed) {
+    return IconButton(
+      icon: Icon(icon, color: Colors.white, size: size),
+      tooltip: tooltip,
+      onPressed: onPressed,
+    );
+  }
+
+  void _showAssignRoleDialog(BuildContext context, User user) {
+    final roles = ['Admin', 'Usuario', 'Conductor'];
+    String selectedRole = roles[0];
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: Colors.lightBlue[50],
-          title: const Text("Editar usuario"),
-          content: SizedBox(
-            width: 400,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildTextField(nameController, "Nombre"),
-                  const SizedBox(height: 10),
-                  _buildTextField(surnamesController, "Apellidos"),
-                  const SizedBox(height: 10),
-                  _buildTextField(usernameController, "Username"),
-                  const SizedBox(height: 10),
-                  _buildTextField(emailController, "Correo electrónico"),
-                  const SizedBox(height: 10),
-                  _buildTextField(phoneController, "Teléfono"),
-                ],
-              ),
-            ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Asignar Rol', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: DropdownButton<String>(
+            value: selectedRole,
+            onChanged: (newRole) {
+              if (newRole != null) selectedRole = newRole;
+            },
+            items: roles.map((role) => DropdownMenuItem(
+              value: role,
+              child: Text(role),
+            )).toList(),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.pop(context),
               child: const Text("Cancelar"),
             ),
             ElevatedButton(
               onPressed: () {
-                // Implementar la lógica de guardado (actualizar el provider, etc.)
-                print(
-                  "Usuario actualizado: "
-                  "${nameController.text}, "
-                  "${surnamesController.text}, "
-                  "${usernameController.text}, "
-                  "${emailController.text}, "
-                  "${phoneController.text}",
-                );
-                Navigator.of(context).pop();
+                Navigator.pop(context);
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange[700],
-              ),
+              child: const Text("Aceptar"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showEditUserDialog(BuildContext context, User user) {
+    final nameController = TextEditingController(text: user.name);
+    final usernameController = TextEditingController(text: user.username);
+    final emailController = TextEditingController(text: user.mail);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text("Editar usuario", style: TextStyle(fontWeight: FontWeight.bold)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildTextField(nameController, "Nombre"),
+                _buildTextField(usernameController, "Username"),
+                _buildTextField(emailController, "Correo electrónico"),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
               child: const Text("Guardar"),
             ),
           ],
@@ -354,18 +292,140 @@ class PendingUserComponentContent extends StatelessWidget {
     );
   }
 
-  /// Crea un TextField con estilo uniforme
-  Widget _buildTextField(TextEditingController controller, String label) {
-    return TextField(
+  void _showUserDetailsDialog(BuildContext context, User user) {
+    String name = user.name;
+    String surnames = user.surnames;
+    String username = user.username;
+    String email = user.mail;
+    String phone = user.phoneNumber;
+    String address = user.address;
+    bool isEditing = false;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            if (!isEditing) {
+              return AlertDialog(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                title: Text('$name $surnames', style: const TextStyle(fontWeight: FontWeight.bold)),
+                content: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Datos personales', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.black54)),
+                      const SizedBox(height: 8),
+                      Text('Usuario: $username'),
+                      Text('Email: $email'),
+                      Text('Teléfono: $phone'),
+                      Text('Dirección: $address'),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancelar'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        isEditing = true;
+                      });
+                    },
+                    child: const Text('Editar'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Aprobar'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Eliminar'),
+                  ),
+                ],
+              );
+            } else {
+              return AlertDialog(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                title: const Text('Editar usuario', style: TextStyle(fontWeight: FontWeight.bold)),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        decoration: const InputDecoration(labelText: 'Nombre'),
+                        controller: TextEditingController(text: name),
+                        onChanged: (value) { name = value; },
+                      ),
+                      TextField(
+                        decoration: const InputDecoration(labelText: 'Apellidos'),
+                        controller: TextEditingController(text: surnames),
+                        onChanged: (value) { surnames = value; },
+                      ),
+                      TextField(
+                        decoration: const InputDecoration(labelText: 'Usuario'),
+                        controller: TextEditingController(text: username),
+                        onChanged: (value) { username = value; },
+                      ),
+                      TextField(
+                        decoration: const InputDecoration(labelText: 'Email'),
+                        controller: TextEditingController(text: email),
+                        onChanged: (value) { email = value; },
+                      ),
+                      TextField(
+                        decoration: const InputDecoration(labelText: 'Teléfono'),
+                        controller: TextEditingController(text: phone),
+                        onChanged: (value) { phone = value; },
+                      ),
+                      TextField(
+                        decoration: const InputDecoration(labelText: 'Dirección'),
+                        controller: TextEditingController(text: address),
+                        onChanged: (value) { address = value; },
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        isEditing = false;
+                      });
+                    },
+                    child: const Text('Cancelar'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        isEditing = false;
+                      });
+                    },
+                    child: const Text('Confirmar'),
+                  ),
+                ],
+              );
+            }
+          },
+        );
+      },
+    );
+  }
+}
+
+Widget _buildTextField(TextEditingController controller, String label) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 8.0),
+    child: TextField(
       controller: controller,
       decoration: InputDecoration(
         labelText: label,
-        filled: true,
-        fillColor: Colors.lightBlue[100],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       ),
-    );
-  }
+    ),
+  );
 }

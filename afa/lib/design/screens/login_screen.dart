@@ -1,8 +1,11 @@
+import 'dart:ui';
+import 'package:afa/logic/providers/loading_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:afa/logic/router/path/path_url_afa.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,14 +15,9 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // Controladores para los campos
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
-  // Controla la visibilidad de la contraseña
   bool _isPasswordVisible = false;
-
-  // Key para el formulario
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -29,29 +27,20 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  /// Inicia sesión con Google usando google_sign_in y firebase_auth
   Future<void> _signInWithGoogle() async {
     try {
-      // 1. Inicia el flujo de Google Sign-In
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) {
-        // El usuario canceló la selección de cuenta
-        return;
-      }
+      if (googleUser == null) return;
 
-      // 2. Obtiene la autenticación del usuario (tokens)
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
-      // 3. Crea las credenciales para FirebaseAuth
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // 4. Inicia sesión en Firebase con las credenciales de Google
       await FirebaseAuth.instance.signInWithCredential(credential);
 
-      // 5. Si todo fue bien, navega al Dashboard
       if (mounted) {
         context.go(PathUrlAfa().pathDashboard);
       }
@@ -65,38 +54,50 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  /// Construye el formulario de login, que incluye los botones "Iniciar sesión"
-  /// y "Continuar con Google" uno debajo del otro
-  Widget _buildLoginForm() {
+  Widget _buildLoginForm(LoadingProvider loadingProvider) {
+    final theme = Theme.of(context);
     return Form(
       key: _formKey,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Encabezado azul
+          // Cabecera con degradado y título
           Container(
             width: double.infinity,
-            decoration: const BoxDecoration(
-              color: Color(0xFF063970),
-              borderRadius: BorderRadius.only(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  theme.brightness == Brightness.dark
+                      ? const Color(0xFF1E1E1E)
+                      : const Color(0xFF063970),
+                  theme.brightness == Brightness.dark
+                      ? const Color(0xFF121212)
+                      : const Color(0xFF66B3FF),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
               ),
             ),
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             alignment: Alignment.center,
             child: const Text(
-              'Iniciar Sesión',
+              'Iniciar sesión',
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 24,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
-          // Contenido blanco
+          // Cuerpo blanco con campos y botones
           Container(
             width: double.infinity,
+            padding: const EdgeInsets.all(30),
             decoration: const BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.only(
@@ -104,70 +105,83 @@ class _LoginScreenState extends State<LoginScreen> {
                 bottomRight: Radius.circular(20),
               ),
             ),
-            padding: const EdgeInsets.all(30),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Campo de usuario
                 _buildFloatingTextField(
                   label: 'Usuario',
                   hint: 'Ingresa tu usuario',
                   controller: _usernameController,
                 ),
                 const SizedBox(height: 15),
-                // Campo de contraseña
                 _buildFloatingPasswordField(),
                 const SizedBox(height: 20),
-                // Botón de Iniciar Sesión
-                ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Campos válidos. Iniciando sesión...'),
-                          backgroundColor: Colors.green,
-                          duration: Duration(seconds: 1),
-                        ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[900],
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    minimumSize: const Size(double.infinity, 0),
-                  ),
-                  child: const Text(
-                    'Iniciar sesión',
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                  ),
-                ),
-                const SizedBox(height: 15),
-                // Botón de Continuar con Google
-                ElevatedButton.icon(
-                  onPressed: _signInWithGoogle,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black87,
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    side: const BorderSide(color: Colors.black12),
-                    minimumSize: const Size(double.infinity, 0),
-                  ),
-                  icon: Image.asset(
-                    'assets/images/google_logo.png',
-                    height: 24,
-                  ),
-                  label: const Text(
-                    'Continuar con Google',
-                    style: TextStyle(fontSize: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Campos válidos. Iniciando sesión...'),
+                            backgroundColor: Colors.green,
+                            duration: Duration(seconds: 1),
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF063970),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 50, vertical: 20),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
+                    child: const Text(
+                      'Iniciar sesión',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 15),
-                // Link para ir al registro
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _signInWithGoogle,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black87,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 50, vertical: 20),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      side: const BorderSide(color: Colors.black12),
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
+                    icon: Image.asset(
+                      'assets/images/google_logo.png',
+                      height: 24,
+                    ),
+                    label: const Text(
+                      'Continuar con Google',
+                      style: TextStyle(
+                        fontSize: 20,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 15),
                 Center(
                   child: TextButton(
                     onPressed: () {
+                      loadingProvider.screenChange();
                       context.go(PathUrlAfa().pathRegister);
                     },
                     child: const Text(
@@ -184,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // Campo de texto con label flotante
+  /// Campo de texto con label flotante
   Widget _buildFloatingTextField({
     required String label,
     required String hint,
@@ -208,7 +222,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // Campo de contraseña con label flotante y control de visibilidad
+  /// Campo de contraseña con label flotante y control de visibilidad
   Widget _buildFloatingPasswordField() {
     return TextFormField(
       controller: _passwordController,
@@ -242,111 +256,106 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Layout responsivo: si el ancho es mayor o igual a 800, se usa Row
-    // con el formulario a la izquierda y el logo+texto a la derecha.
-    // En pantallas más pequeñas, el logo se posiciona debajo del formulario.
+    final loadingProvider =
+        Provider.of<LoadingProvider>(context, listen: true);
+
     final double screenWidth = MediaQuery.of(context).size.width;
-    final bool isLargeScreen = screenWidth >= 800;
-    final double formAdaptiveWidth = isLargeScreen ? screenWidth * 0.45 : screenWidth * 0.9;
-    final double logoAdaptiveWidth = isLargeScreen ? screenWidth * 0.35 : screenWidth * 0.9;
+    final double containerWidth =
+        screenWidth * 0.9 > 900 ? 900 : screenWidth * 0.9;
 
     return Scaffold(
-      backgroundColor: Colors.lightBlue[100],
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF063970),
-        elevation: 2,
-        shadowColor: Colors.black26,
-        leadingWidth: 150,
-        leading: TextButton.icon(
-          onPressed: () => context.go('/'),
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          label: const FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              'Volver al inicio',
-              style: TextStyle(color: Colors.white, fontSize: 25),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        // leadingWidth menor para que el hover sea más pequeño
+        leadingWidth: 80,
+        leading: Tooltip(
+          message: 'Volver al inicio',
+          child: IconButton(
+            onPressed: () {
+              loadingProvider.screenChange();
+              context.go(PathUrlAfa().pathWelcome);
+            },
+            // Reemplazamos el icon por la imagen en sí, sin fondo
+            icon: Image.asset(
+              'assets/images/logo.png',
+              width: 80,   // Ajusta el tamaño para hacerlo más grande
+              height: 80,  // Ajusta el tamaño para hacerlo más grande
+              fit: BoxFit.contain,
             ),
+            // Ajustamos el iconSize para que el hover sea más pequeño
+            iconSize: 70,
           ),
         ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Center(
-            child: isLargeScreen
-                ? Container(
-                    width: screenWidth,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Formulario a la izquierda
-                        Container(
-                          width: formAdaptiveWidth,
-                          child: _buildLoginForm(),
-                        ),
-                        // Logo y texto de bienvenida a la derecha
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Image.asset(
-                              'assets/images/logo.png',
-                              width: logoAdaptiveWidth,
-                              fit: BoxFit.contain,
-                            ),
-                            const SizedBox(height: 20),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 10),
-                              child: Text(
-                                '¡Bienvenido!\nInicia sesión para disfrutar de todas las funciones.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.black87,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  )
-                : Column(
-                    children: [
-                      Container(
-                        width: screenWidth * 0.9,
-                        child: _buildLoginForm(),
-                      ),
-                      const SizedBox(height: 20),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Image.asset(
-                            'assets/images/logo.png',
-                            width: logoAdaptiveWidth,
-                            fit: BoxFit.contain,
-                          ),
-                          const SizedBox(height: 20),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 10),
-                            child: Text(
-                              '¡Bienvenido!\nInicia sesión para disfrutar de todas las funciones.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.black87,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
+      body: Stack(
+        children: [
+          // Fondo con mapa + blur
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/map_background.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+              child: Container(color: Colors.black.withOpacity(0.2)),
+            ),
+          ),
+          // Contenedor principal con el formulario
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                child: Container(
+                  width: containerWidth,
+                  margin: const EdgeInsets.symmetric(
+                      horizontal: 20, vertical: 30),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 20,
+                        offset: Offset(0, 10),
                       ),
                     ],
                   ),
+                  child: _buildLoginForm(loadingProvider),
+                ),
+              ),
+            ),
           ),
-        ),
+          // Footer superpuesto (pequeño)
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 40,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.transparent,
+                    Colors.black54,
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+              alignment: Alignment.center,
+              child: const Text(
+                '© 2025 AFA Andújar',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
