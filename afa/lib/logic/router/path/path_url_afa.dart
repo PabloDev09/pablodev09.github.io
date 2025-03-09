@@ -4,4 +4,5 @@ class PathUrlAfa
   final String pathLogin = "/login";
   final String pathRegister = "/register";
   final String pathDashboard = "/dashboard";
+  final String pathMap = "/map";
 }

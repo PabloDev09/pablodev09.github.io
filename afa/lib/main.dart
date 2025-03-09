@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:afa/logic/providers/user_register_provider.dart';
 import 'dart:ui'; // Para el uso de BackdropFilter si lo necesitaras
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(

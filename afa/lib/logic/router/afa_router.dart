@@ -1,5 +1,6 @@
 import 'package:afa/design/screens/dashboard_screen.dart';
 import 'package:afa/design/screens/login_screen.dart';
+import 'package:afa/design/screens/map_screen.dart';
 import 'package:afa/design/screens/not_found_screen.dart';
 import 'package:afa/design/screens/register_screen.dart';
 import 'package:afa/design/screens/welcome_screen.dart';
@@ -37,6 +38,11 @@ final GoRouter afaRouter = GoRouter(
 //       if (!isAuthenticated()) return '/login';
 //       return null;
 //     },
+    ),
+    GoRoute(
+      path: '/map',
+      name: 'map',
+      builder: (context, state) => const MapScreen(),
     ),
   ],
   errorBuilder: (context, state) => const NotFoundScreen(),

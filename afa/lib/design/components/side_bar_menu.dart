@@ -67,10 +67,10 @@ class _SidebarMenuState extends State<SidebarMenu> {
             context.go(PathUrlAfa().pathRegister);
           }
           else if (index==1){
-            context.go(PathUrlAfa().pathLogin);
+            context.go(PathUrlAfa().pathDashboard);
           }
           else if (index==2){
-            context.go(PathUrlAfa().pathWelcome);
+            context.go(PathUrlAfa().pathMap);
           }
           else if (index==3){
             context.go(PathUrlAfa().pathDashboard);
