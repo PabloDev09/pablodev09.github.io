@@ -178,7 +178,7 @@ class _RegisterScreenState extends State<RegisterScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              style: TextButton.styleFrom(foregroundColor: Color(0xFF063970)),
+              style: TextButton.styleFrom(foregroundColor: const Color(0xFF063970)),
               child: const Text('Aceptar'),
             ),
           ],

@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:ui';
 import 'package:afa/logic/providers/loading_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';

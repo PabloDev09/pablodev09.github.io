@@ -47,7 +47,12 @@ dependencies:
   google_maps_flutter: ^2.10.1
   google_maps_flutter_web: ^0.5.11
   google_sign_in: ^6.2.2
+<<<<<<< HEAD
   flutter_polyline_points: ^2.1.0
+=======
+  gif: ^2.3.0
+
+>>>>>>> 1d4fe4f0708b1e08b7e1013422a338676b9b124e
 
 dev_dependencies:
   flutter_test:
