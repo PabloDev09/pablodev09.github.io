@@ -12,7 +12,7 @@ class AfaTheme {
 
   static ThemeData lightTheme(Color primaryColor) {
     return ThemeData(
-      fontFamily: 'Montserrat', // <-- Aplica la fuente a todo el texto
+      fontFamily: 'Montserrat', 
       useMaterial3: true,
       colorSchemeSeed: primaryColor,
       brightness: Brightness.light,
@@ -34,7 +34,7 @@ class AfaTheme {
 
   static ThemeData darkTheme(Color primaryColor) {
     return ThemeData(
-      fontFamily: 'Montserrat', // <-- Aplica la fuente a todo el texto
+      fontFamily: 'Montserrat',
       useMaterial3: true,
       colorSchemeSeed: primaryColor,
       brightness: Brightness.dark,

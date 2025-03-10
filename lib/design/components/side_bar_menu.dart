@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:afa/logic/router/path/path_url_afa.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
