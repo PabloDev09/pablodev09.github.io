@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:afa/design/components/side_bar_menu.dart';  // Asegúrate de importar el SidebarMenu
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -17,6 +18,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen>
     with SingleTickerProviderStateMixin {
   bool _showActiveUsers = false;
+  bool _isMenuOpen = false; // Variable para controlar el estado del menú
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -39,6 +41,12 @@ class _DashboardScreenState extends State<DashboardScreen>
     super.dispose();
   }
 
+  void _toggleMenu() {
+    setState(() {
+      _isMenuOpen = !_isMenuOpen;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -49,6 +57,13 @@ class _DashboardScreenState extends State<DashboardScreen>
         elevation: 0,
         title: Row(
           children: [
+             IconButton(
+              icon: Icon(
+                _isMenuOpen ? Icons.close : Icons.menu,
+                color: Colors.white,
+              ),
+              onPressed: _toggleMenu,
+            ),
             // Título a la izquierda
             const Expanded(
               flex: 2,
@@ -67,7 +82,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
               ),
             ),
-            SizedBox(width: MediaQuery.of(context).size.width * 0.052,),
+            SizedBox(width: MediaQuery.of(context).size.width * 0.052),
             Expanded(
               flex: 3,
               child: Align(
@@ -135,7 +150,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
               ),
             ),
-            
             // Botón de logout a la derecha
             Expanded(
               flex: 1,
@@ -155,37 +169,61 @@ class _DashboardScreenState extends State<DashboardScreen>
           ],
         ),
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              theme.brightness == Brightness.dark
-                  ? const Color(0xFF1E1E1E)
-                  : const Color(0xFF063970),
-              theme.brightness == Brightness.dark
-                  ? const Color(0xFF121212)
-                  : const Color(0xFF66B3FF),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+      body: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  theme.brightness == Brightness.dark
+                      ? const Color(0xFF1E1E1E)
+                      : const Color(0xFF063970),
+                  theme.brightness == Brightness.dark
+                      ? const Color(0xFF121212)
+                      : const Color(0xFF66B3FF),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: _showActiveUsers
+                          ? const ActiveUserComponent()
+                          : const PendingUserComponentContent(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: _showActiveUsers
-                      ? const ActiveUserComponent()
-                      : const PendingUserComponentContent(),
+          // Sidebar Menu (cuando está activo)
+          if (_isMenuOpen)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: _toggleMenu,
+                child: Container(
+                  color: Colors.black.withOpacity(0.5),
                 ),
               ),
             ),
-          ],
-        ),
+          if (_isMenuOpen)
+            const Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              child: SidebarMenu(
+                selectedIndex: 1, 
+                userName: "Juan Pérez",
+              ),
+            ),
+        ],
       ),
     );
   }
