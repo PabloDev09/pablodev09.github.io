@@ -1,10 +1,10 @@
-import 'package:afa/design/screens/loading_screen.dart';
 import 'package:afa/logic/providers/bus_provider.dart';
 import 'package:afa/logic/providers/loading_provider.dart';
 import 'package:afa/logic/providers/theme_provider.dart';
 import 'package:afa/logic/providers/user_active_provider.dart';
 import 'package:afa/logic/providers/user_request_provider.dart';
 import 'package:afa/design/themes/afa_theme.dart';
+import 'package:afa/design/screens/loading_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:afa/logic/router/afa_router.dart';

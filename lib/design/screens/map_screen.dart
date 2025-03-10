@@ -1,8 +1,7 @@
 import 'package:afa/design/components/side_bar_menu.dart';
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'dart:async';
+import 'package:geolocator/geolocator.dart';
 import 'dart:math';
 
 class MapScreen extends StatefulWidget {
@@ -16,13 +15,12 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
   bool _isMenuOpen = false;
   bool _showDistance = false;
   late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
   
-  LatLng _currentLocation = const LatLng(38.0386, -3.7746); // Andújar, Jaén por defecto
-  LatLng _driverLocation = const LatLng(38.0406, -3.7800); // Ubicación simulada del conductor
+  LatLng _currentLocation = const LatLng(38.0358053, -4.0247146); 
+  LatLng _driverLocation = const LatLng(38.0386, -3.7746); 
   GoogleMapController? _mapController;
   double _distance = 0.0;
-  double _estimatedTime = 0.0; // En minutos
+  double _estimatedTime = 0.0; 
 
   @override
   void initState() {
@@ -30,10 +28,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
-    );
-    _fadeAnimation = CurvedAnimation(parent: _animationController, curve: Curves.easeIn);
-    _animationController.forward();
-
+    )..forward();
     _determinePosition();
   }
 
@@ -52,9 +47,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
       _currentLocation = LatLng(position.latitude, position.longitude);
     });
 
-    if (_mapController != null) {
-      _mapController!.animateCamera(CameraUpdate.newLatLng(_currentLocation));
-    }
+    _mapController?.animateCamera(CameraUpdate.newLatLng(_currentLocation));
   }
 
   void _toggleMenu() {
@@ -64,22 +57,19 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
   }
 
   void _moveDriver() {
-    // Simulación de movimiento del conductor
     setState(() {
       _driverLocation = LatLng(
-        _driverLocation.latitude + 0.001, // Se mueve un poco
+        _driverLocation.latitude + 0.001,
         _driverLocation.longitude + 0.001,
       );
     });
 
-    if (_mapController != null) {
-      _mapController!.animateCamera(CameraUpdate.newLatLng(_driverLocation));
-    }
+    _mapController?.animateCamera(CameraUpdate.newLatLng(_driverLocation));
   }
 
   void _calculateDistance() {
     double distance = _haversineDistance(_currentLocation, _driverLocation);
-    double estimatedTime = (distance / 0.5) * 60; // Velocidad media de 30 km/h
+    double estimatedTime = (distance / 0.5) * 60; 
 
     setState(() {
       _distance = distance;
@@ -87,7 +77,6 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
       _showDistance = true;
     });
 
-    // Ocultar el texto después de 5 segundos
     Future.delayed(const Duration(seconds: 5), () {
       setState(() {
         _showDistance = false;
@@ -96,14 +85,14 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
   }
 
   double _haversineDistance(LatLng start, LatLng end) {
-    const double R = 6371; // Radio de la Tierra en km
+    const double R = 6371;
     double dLat = _degToRad(end.latitude - start.latitude);
     double dLon = _degToRad(end.longitude - start.longitude);
     double a = sin(dLat / 2) * sin(dLat / 2) +
         cos(_degToRad(start.latitude)) * cos(_degToRad(end.latitude)) *
             sin(dLon / 2) * sin(dLon / 2);
     double c = 2 * atan2(sqrt(a), sqrt(1 - a));
-    return R * c; // Distancia en km
+    return R * c; 
   }
 
   double _degToRad(double deg) {
@@ -123,12 +112,27 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
       extendBodyBehindAppBar: false,
       body: Column(
         children: [
-          // AppBar personalizada
-          AppBar(
-            backgroundColor: Colors.blue,
-            elevation: 0,
-            title: Row(
+          // AppBar con gradiente y botón a la izquierda
+          Container(
+            padding: const EdgeInsets.only(top: 10, left: 10, right: 10, bottom: 10),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF063970), Color(0xFF66B3FF)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Row(
               children: [
+                IconButton(
+                  icon: Icon(
+                    _isMenuOpen ? Icons.close : Icons.menu,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                  onPressed: _toggleMenu,
+                ),
+                const SizedBox(width: 10),
                 const Expanded(
                   child: Text(
                     'Mapa',
@@ -139,35 +143,24 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                     ),
                   ),
                 ),
-                IconButton(
-                  icon: Icon(
-                    _isMenuOpen ? Icons.close : Icons.menu,
-                    color: Colors.white,
-                    size: 30,
-                  ),
-                  onPressed: _toggleMenu,
-                ),
               ],
             ),
           ),
 
-          // Menú de opciones
-          FadeTransition(
-            opacity: _fadeAnimation,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildMenuButton("Centrar", Icons.my_location, _determinePosition),
-                  _buildMenuButton("Conductor", Icons.directions_car, _moveDriver),
-                  _buildMenuButton("Distancia", Icons.location_on, _calculateDistance),
-                ],
-              ),
+          // Menú de opciones con botones estilizados
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildMenuButton("Centrar", Icons.my_location, _determinePosition),
+                _buildMenuButton("Conductor", Icons.directions_car, _moveDriver),
+                _buildMenuButton("Distancia", Icons.location_on, _calculateDistance),
+              ],
             ),
           ),
 
-          // Mapa expandido debajo de la AppBar y los botones
+          // Mapa
           Expanded(
             child: Stack(
               children: [
@@ -178,6 +171,10 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                   },
                   myLocationEnabled: true,
                   myLocationButtonEnabled: false,
+                  tiltGesturesEnabled: true,
+                  compassEnabled: true,
+                  scrollGesturesEnabled: true,
+                  zoomGesturesEnabled: true,
                   markers: {
                     Marker(
                       markerId: const MarkerId("current"),
@@ -194,7 +191,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                   },
                 ),
 
-                // Texto de distancia y tiempo estimado (se oculta después de 5 segundos)
+                // Texto de distancia y tiempo estimado
                 if (_showDistance)
                   Positioned(
                     bottom: 20,
@@ -214,7 +211,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                     ),
                   ),
 
-                // Sidebar Menu (cuando está activo)
+                // Sidebar Menu cuando está activo
                 if (_isMenuOpen)
                   Positioned.fill(
                     child: GestureDetector(
@@ -224,7 +221,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                       ),
                     ),
                   ),
-                if (_isMenuOpen)
+                  if (_isMenuOpen)
                   const Positioned(
                     left: 0,
                     top: 0,
@@ -243,14 +240,25 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
   }
 
   Widget _buildMenuButton(String label, IconData icon, VoidCallback onPressed) {
-    return ElevatedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, color: Colors.white),
-      label: Text(label, style: const TextStyle(color: Colors.white)),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.blue[700],
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF063970), Color(0xFF66B3FF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, color: Colors.white),
+        label: Text(label, style: const TextStyle(color: Colors.white)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        ),
       ),
     );
   }
