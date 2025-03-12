@@ -29,7 +29,7 @@ class _LoadingScreenState extends State<LoadingScreen> with TickerProviderStateM
   void initState() {
     super.initState();
 
-    // Si necesitas controlar manualmente el GIF:
+    // Inicializamos el controlador para el GIF
     _gifController = AfaGifController(
       vsync: this,
       frameCount: frameCount,
@@ -62,21 +62,15 @@ class _LoadingScreenState extends State<LoadingScreen> with TickerProviderStateM
     final busProvider = Provider.of<BusProvider>(context, listen: false);
 
     if (loadingProvider.isScreenChange) {
-      // Reiniciamos el fade para que la animación del bus empiece con opacidad 1.0
       _fadeController.reset();
-
-      // Mostramos la pantalla de carga
       setState(() => _isLoading = true);
-
       busProvider.resetPosition();
       busProvider.startAnimation(this);
 
-      // Simulamos 2 segundos de carga
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) {
           _fadeController.forward();
           loadingProvider.isScreenChange = false;
-
           Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted) {
               setState(() => _isLoading = false);
@@ -101,7 +95,7 @@ class _LoadingScreenState extends State<LoadingScreen> with TickerProviderStateM
             ),
             child: Stack(
               children: [
-                // Logo y círculo de carga
+                // Logo y CircularProgressIndicator centrados
                 Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -133,17 +127,18 @@ class _LoadingScreenState extends State<LoadingScreen> with TickerProviderStateM
                     ],
                   ),
                 ),
-                // Autobús animado
+                // Autobús animado siempre pegado al fondo
                 Consumer<BusProvider>(
                   builder: (context, busProvider, child) {
                     final screenWidth = MediaQuery.of(context).size.width;
-                    final busWidth = screenWidth * 0.25;
-
-                    // xPos: de -busWidth (fuera de la pantalla) a screenWidth (derecha)
+                    final screenHeight = MediaQuery.of(context).size.height;
+                    // El ancho del autobús será el menor entre 25% del ancho y 30% del alto
+                    final busWidth = (screenWidth * 0.25).clamp(0.0, screenHeight * 0.3);
+                    // Calculamos la posición horizontal (animada)
                     final xPos = -busWidth + busProvider.busProgress * (screenWidth + busWidth);
 
                     return Positioned(
-                      bottom: 0, // Pegado al fondo
+                      bottom: 0, // Siempre pegado abajo
                       left: xPos,
                       child: FadeTransition(
                         opacity: _fadeAnimation,

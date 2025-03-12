@@ -1,6 +1,7 @@
+import 'package:afa/logic/models/user.dart';
+import 'package:afa/logic/providers/user_active_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:afa/logic/providers/user_active_provider.dart';
 
 class ActiveUserComponent extends StatelessWidget {
   const ActiveUserComponent({super.key});
@@ -14,31 +15,48 @@ class ActiveUserComponent extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(height: 30),
-            // Si NO hay usuarios, se muestra directamente el mensaje en el centro
+            // Título fijo para usuarios activos
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.person, color: Colors.white, size: 30),
+                SizedBox(width: 6),
+                Text(
+                  'Usuarios Activos',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Si no hay usuarios, se muestra un mensaje centrado
             if (activeUsers.isEmpty)
               _buildNoUsersDirectly(context)
             else
-              // Si HAY usuarios, se muestra la tabla dentro de un contenedor con sombra.
-              _buildActiveUsersContainer(context, activeUsers),
-            const SizedBox(height: 30),
+              _buildActiveUsersCards(context, activeUsers),
+            const SizedBox(height: 20),
           ],
         );
       },
     );
   }
 
-  /// Muestra un mensaje centrado horizontal y verticalmente SIN contenedor adicional
+  /// Muestra un mensaje centrado en caso de que no haya usuarios activos.
   Widget _buildNoUsersDirectly(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
+    double fontSize = MediaQuery.of(context).size.width * 0.02;
+    fontSize = fontSize.clamp(14, 18);
 
     return SizedBox(
-      height: screenHeight * 0.7, // 70% de la pantalla
+      height: screenHeight * 0.7,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Ícono principal (personas) con la X roja superpuesta
+            // Ícono principal para usuarios activos con X roja superpuesta
             SizedBox(
               width: 120,
               height: 120,
@@ -70,7 +88,7 @@ class ActiveUserComponent extends StatelessWidget {
                 fontSize: 28,
                 fontWeight: FontWeight.w600,
                 color: Colors.black87,
-                fontFamily: 'Roboto',  // Fuente moderna
+                fontFamily: 'Roboto',
               ),
             ),
             const SizedBox(height: 8),
@@ -89,102 +107,215 @@ class ActiveUserComponent extends StatelessWidget {
     );
   }
 
-  /// Contenedor con sombra y bordes redondeados que aloja la tabla
-  Widget _buildActiveUsersContainer(BuildContext context, List activeUsers) {
-    return Center(
+  /// Construye las tarjetas de usuarios activos en una cuadrícula.
+  Widget _buildActiveUsersCards(BuildContext context, List<User> activeUsers) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        int columns;
+        double fontSize = constraints.maxWidth * 0.02;
+        fontSize = fontSize.clamp(22, 24);
+
+        double columnFactor = constraints.maxWidth / 375;
+        columns = columnFactor.floor();
+        double decimalPart = columnFactor - columns;
+        fontSize = (fontSize + decimalPart * 6).clamp(22, 25);
+
+        const double spacing = 16;
+        final double totalSpacing = spacing * (columns - 1);
+        final double itemWidth = (constraints.maxWidth - totalSpacing) / columns;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: activeUsers.map((user) {
+            return SizedBox(
+              width: itemWidth,
+              height: 400, 
+              child: _buildUserContainer(context, user, fontSize),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  /// Contenedor interno para cada usuario activo, con gradiente y sombra distintiva.
+  Widget _buildUserContainer(BuildContext context, User user, double fontSize) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 1200),
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 15,
-              offset: Offset(0, 5),
-            ),
-          ],
+        decoration: const BoxDecoration
+        (
+          // Gradiente en tonos verdes para identificar usuarios activos
+          color: Colors.white
+          ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: _buildUserContent(context, user, fontSize),
         ),
-        child: _buildActiveUsersTable(context, activeUsers),
       ),
     );
   }
 
-  /// Tabla con encabezado y filas
-  Widget _buildActiveUsersTable(BuildContext context, List activeUsers) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16), // Borde redondeado de la tabla
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            scrollDirection: Axis.vertical,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.topLeft,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minWidth: constraints.maxWidth),
-                child: DataTable(
-                  headingRowHeight: 70, // Encabezados más altos para mejorar la legibilidad
-                  columns: const [
-                    DataColumn(label: Text('Nombre', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
-                    DataColumn(label: Text('Username', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
-                    DataColumn(label: Text('Correo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
-                    DataColumn(label: Text('Teléfono', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
-                    DataColumn(label: Text('Acciones', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
-                  ],
-                  rows: [
-                    for (int i = 0; i < activeUsers.length; i++)
-                      DataRow(
-                        color: i % 2 == 0
-                            ? WidgetStateProperty.all(Colors.lightGreen[50]) // Fondo verde suave
-                            : WidgetStateProperty.all(Colors.blue[50]), // Fondo azul suave
-                        cells: [
-                          DataCell(Text('${activeUsers[i].name} ${activeUsers[i].surnames}', style: const TextStyle(fontSize: 16, fontFamily: 'Roboto'))),
-                          DataCell(Text(activeUsers[i].username, style: const TextStyle(fontSize: 16, fontFamily: 'Roboto'))),
-                          DataCell(Text(activeUsers[i].mail, style: const TextStyle(fontSize: 16, fontFamily: 'Roboto'))),
-                          DataCell(Text(activeUsers[i].phoneNumber, style: const TextStyle(fontSize: 16, fontFamily: 'Roboto'))),
-                          DataCell(
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Botón editar
-                                IconButton(
-                                  icon: const Icon(Icons.edit),
-                                  onPressed: () => _editUser(context, activeUsers[i]),
-                                  tooltip: 'Editar usuario',
-                                  color: Colors.blueAccent,
-                                ),
-                                const SizedBox(width: 8),
-                                // Botón eliminar
-                                IconButton(
-                                  icon: const Icon(Icons.delete),
-                                  onPressed: () => _deleteUser(context, activeUsers[i]),
-                                  tooltip: 'Eliminar usuario',
-                                  color: Colors.redAccent,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+  /// Muestra la información del usuario activo, incluyendo rol.
+  Widget _buildUserContent(BuildContext context, User user, double fontSize) {
+    Map<IconData, Color> iconColors = {
+      Icons.person: Colors.blue.shade300,
+      Icons.email: Colors.green.shade300,
+      Icons.phone: Colors.orange.shade300,
+      Icons.location_on: Colors.red.shade300,
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Información principal con scroll si es necesario
+        Flexible(
+          fit: FlexFit.tight,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Nombre del usuario y botón para más detalles
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${user.name} ${user.surnames}',
+                        style: TextStyle(
+                          fontSize: fontSize,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
                       ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.more_vert, color: Colors.black54),
+                      onPressed: () {
+                        _showUserDetailsDialog(context, user);
+                      },
+                    ),
                   ],
                 ),
+                Text(
+                  'Datos personales',
+                  style: TextStyle(
+                    fontSize: fontSize * 0.9,
+                    color: Colors.black54,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                const Divider(),
+                _buildUserInfoRow(Icons.person, 'Usuario:', user.username, fontSize, iconColors),
+                _buildUserInfoRow(Icons.email, 'Email:', user.mail, fontSize, iconColors),
+                _buildUserInfoRow(Icons.phone, 'Teléfono:', user.phoneNumber, fontSize, iconColors),
+                _buildUserInfoRow(Icons.location_on, 'Dirección:', user.address, fontSize, iconColors),
+                _buildUserInfoRow(Icons.security, 'Rol:', user.rol, fontSize, iconColors)
+              ],
+            ),
+          ),
+        ),
+        // Botones de acción fijos en la parte inferior del contenedor
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: _buildActionButtons(context, user),
+        ),
+      ],
+    );
+  }
+
+  /// Fila de información para cada dato (usuario, email, etc.)
+  Widget _buildUserInfoRow(
+    IconData icon,
+    String label,
+    String value,
+    double fontSize,
+    Map<IconData, Color> iconColors,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: fontSize * 1.2, color: iconColors[icon]),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: const Color.fromARGB(255, 0, 0, 0),
+              fontSize: fontSize,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                value,
+                style: TextStyle(
+                  color: Colors.black54,
+                  fontSize: fontSize * 0.95,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
 
-  /// Ejemplo de acción para editar
-  void _editUser(BuildContext context, dynamic user) {
+  /// Botones de acción: Dar de baja y Eliminar
+  Widget _buildActionButtons(BuildContext context, User user) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        double iconSize = constraints.maxWidth * 0.15;
+        iconSize = iconSize.clamp(20, 30);
+
+        return Container(
+          width: double.infinity,
+          alignment: Alignment.bottomCenter,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF2E7D32), Color(0xFF66BB6A)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              // Botón para dar de baja
+              _buildIconButton(Icons.remove_circle_outline, 'Dar de baja', iconSize, () {
+                _deactivateUser(context, user);
+              }),
+              // Botón para eliminar
+              _buildIconButton(Icons.delete, 'Eliminar', iconSize, () {
+                _deleteUser(context, user);
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildIconButton(IconData icon, String tooltip, double size, VoidCallback onPressed) {
+    return IconButton(
+      icon: Icon(icon, color: Colors.white, size: size),
+      tooltip: tooltip,
+      onPressed: onPressed,
+    );
+  }
+
+  void _deactivateUser(BuildContext context, dynamic user) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Editar usuario'),
-        content: Text('Editar a ${user.username}'),
+        title: const Text('Dar de baja usuario'),
+        content: Text('¿Estás seguro de dar de baja a ${user.username}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -192,17 +323,16 @@ class ActiveUserComponent extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              // Lógica para guardar cambios
+              // Lógica para desactivar al usuario
               Navigator.pop(context);
             },
-            child: const Text('Guardar'),
+            child: const Text('Confirmar'),
           ),
         ],
       ),
     );
   }
 
-  /// Ejemplo de acción para eliminar
   void _deleteUser(BuildContext context, dynamic user) {
     showDialog(
       context: context,
@@ -216,13 +346,147 @@ class ActiveUserComponent extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              // Lógica para eliminar el usuario del provider
+              // Lógica para eliminar al usuario
               Navigator.pop(context);
             },
             child: const Text('Eliminar'),
           ),
         ],
       ),
+    );
+  }
+
+  void _showUserDetailsDialog(BuildContext context, User user) {
+    String name = user.name;
+    String surnames = user.surnames;
+    String username = user.username;
+    String email = user.mail;
+    String phone = user.phoneNumber;
+    String address = user.address;
+    bool isEditing = false;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            if (!isEditing) {
+              return AlertDialog(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                title: Text('$name $surnames', style: const TextStyle(fontWeight: FontWeight.bold)),
+                content: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Datos personales',
+                        style: TextStyle(fontStyle: FontStyle.italic, color: Colors.black54),
+                      ),
+                      const SizedBox(height: 8),
+                      Text('Usuario: $username'),
+                      Text('Email: $email'),
+                      Text('Teléfono: $phone'),
+                      Text('Dirección: $address'),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancelar'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        isEditing = true;
+                      });
+                    },
+                    child: const Text('Editar'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Aprobar'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Eliminar'),
+                  ),
+                ],
+              );
+            } else {
+              return AlertDialog(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                title: const Text('Editar usuario', style: TextStyle(fontWeight: FontWeight.bold)),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        decoration: const InputDecoration(labelText: 'Nombre'),
+                        controller: TextEditingController(text: name),
+                        onChanged: (value) {
+                          name = value;
+                        },
+                      ),
+                      TextField(
+                        decoration: const InputDecoration(labelText: 'Apellidos'),
+                        controller: TextEditingController(text: surnames),
+                        onChanged: (value) {
+                          surnames = value;
+                        },
+                      ),
+                      TextField(
+                        decoration: const InputDecoration(labelText: 'Usuario'),
+                        controller: TextEditingController(text: username),
+                        onChanged: (value) {
+                          username = value;
+                        },
+                      ),
+                      TextField(
+                        decoration: const InputDecoration(labelText: 'Email'),
+                        controller: TextEditingController(text: email),
+                        onChanged: (value) {
+                          email = value;
+                        },
+                      ),
+                      TextField(
+                        decoration: const InputDecoration(labelText: 'Teléfono'),
+                        controller: TextEditingController(text: phone),
+                        onChanged: (value) {
+                          phone = value;
+                        },
+                      ),
+                      TextField(
+                        decoration: const InputDecoration(labelText: 'Dirección'),
+                        controller: TextEditingController(text: address),
+                        onChanged: (value) {
+                          address = value;
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancelar'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Guardar cambios'),
+                  ),
+                ],
+              );
+            }
+          },
+        );
+      },
     );
   }
 }

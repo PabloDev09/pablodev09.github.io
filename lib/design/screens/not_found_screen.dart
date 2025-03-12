@@ -87,7 +87,7 @@ class NotFoundScreen extends StatelessWidget {
                       ElevatedButton(
                         onPressed: () {
                           loadingProvider.screenChange();
-                          context.go(PathUrlAfa().pathDashboard); 
+                          context.go(PathUrlAfa().pathWelcome); 
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF063970), // Azul oscuro

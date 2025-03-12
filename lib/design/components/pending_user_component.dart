@@ -1,4 +1,4 @@
-import 'package:afa/logic/providers/user_request_provider.dart'; 
+import 'package:afa/logic/providers/user_request_provider.dart';
 import 'package:afa/logic/models/user.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -14,6 +14,21 @@ class PendingUserComponentContent extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.person_add_alt_rounded, color: Colors.white, size: 30),
+                SizedBox(width: 6),
+                Text(
+                  'Peticiones de registro',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 20),
             if (pendingUsers.isEmpty)
               _buildNoUsersDirectly(context)
@@ -63,94 +78,113 @@ class PendingUserComponentContent extends StatelessWidget {
   Widget _buildPendingUsersCards(BuildContext context, List<User> pendingUsers) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final crossAxisCount = constraints.maxWidth < 600 ? 1 : 2;
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 8, 
-            mainAxisSpacing: 8,
-          ),
-          itemCount: pendingUsers.length,
-          itemBuilder: (context, index) {
-            return _buildUserContainer(context, pendingUsers[index]);
-          },
+        int columns;
+        double fontSize = constraints.maxWidth * 0.02;
+        fontSize = fontSize.clamp(22, 24);
+        double columnFactor = constraints.maxWidth / 340;
+        columns = columnFactor.floor();
+        double decimalPart = columnFactor - columns;
+        fontSize = (fontSize + decimalPart * 6).clamp(22, 25);
+        const double spacing = 16;
+        final double totalSpacing = spacing * (columns - 1);
+        final double itemWidth = (constraints.maxWidth - totalSpacing) / columns;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: pendingUsers.map((user) {
+            return SizedBox(
+              width: itemWidth,
+              height: 350,
+              child: _buildUserContainer(context, user, fontSize),
+            );
+          }).toList(),
         );
       },
     );
   }
 
-  Widget _buildUserContainer(BuildContext context, User user) {
-    double fontSize = MediaQuery.of(context).size.width * 0.025;
-    fontSize = fontSize.clamp(16, 20);
+  /// Contenedor interno. Va dentro de un SizedBox.
+  Widget _buildUserContainer(BuildContext context, User user, double fontSize) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        color: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: _buildUserContent(context, user, fontSize),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUserContent(BuildContext context, User user, double fontSize) {
     Map<IconData, Color> iconColors = {
       Icons.person: Colors.blue.shade300,
       Icons.email: Colors.green.shade300,
       Icons.phone: Colors.orange.shade300,
       Icons.location_on: Colors.red.shade300,
     };
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          )
-        ],
-      ),
-      // Elimina o ajusta este margin si no quieres espacio entre contenedores
-      margin: EdgeInsets.zero,
-      // Padding mínimo para que no se pegue el contenido a los bordes
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        mainAxisSize: MainAxisSize.min, 
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '${user.name} ${user.surnames}',
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Flexible(
+          fit: FlexFit.tight,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${user.name} ${user.surnames}',
+                        style: TextStyle(
+                          fontSize: fontSize,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.more_vert, color: Colors.black54),
+                      onPressed: () {
+                        _showUserDetailsDialog(context, user);
+                      },
+                    ),
+                  ],
+                ),
+                Text(
+                  'Datos personales',
                   style: TextStyle(
-                    fontSize: fontSize,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    fontSize: fontSize * 0.9,
+                    color: Colors.black54,
+                    fontStyle: FontStyle.italic,
                   ),
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.more_vert, color: Colors.black54),
-                onPressed: () {
-                  _showUserDetailsDialog(context, user);
-                },
-              ),
-            ],
-          ),
-          Text(
-            'Datos personales',
-            style: TextStyle(
-              fontSize: fontSize * 0.9,
-              color: Colors.black54,
-              fontStyle: FontStyle.italic,
+                const Divider(),
+                _buildUserInfoRow(Icons.person, 'Usuario:', user.username, fontSize, iconColors),
+                _buildUserInfoRow(Icons.email, 'Email:', user.mail, fontSize, iconColors),
+                _buildUserInfoRow(Icons.phone, 'Teléfono:', user.phoneNumber, fontSize, iconColors),
+                _buildUserInfoRow(Icons.location_on, 'Dirección:', user.address, fontSize, iconColors),
+              ],
             ),
           ),
-          const Divider(),
-          _buildUserInfoRow(Icons.person, 'Usuario:', user.username, fontSize, iconColors),
-          _buildUserInfoRow(Icons.email, 'Email:', user.mail, fontSize, iconColors),
-          _buildUserInfoRow(Icons.phone, 'Teléfono:', user.phoneNumber, fontSize, iconColors),
-          _buildUserInfoRow(Icons.location_on, 'Dirección:', user.address, fontSize, iconColors),
-          _buildActionButtons(context, user),
-        ],
-      ),
+        ),
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: _buildActionButtons(context, user),
+        ),
+      ],
     );
   }
 
-  Widget _buildUserInfoRow(IconData icon, String label, String value, double fontSize, Map<IconData, Color> iconColors) {
+  Widget _buildUserInfoRow(
+    IconData icon,
+    String label,
+    String value,
+    double fontSize,
+    Map<IconData, Color> iconColors,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -167,13 +201,16 @@ class PendingUserComponentContent extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                color: Colors.black54,
-                fontSize: fontSize * 0.95,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                value,
+                style: TextStyle(
+                  color: Colors.black54,
+                  fontSize: fontSize * 0.95,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
-              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -181,33 +218,40 @@ class PendingUserComponentContent extends StatelessWidget {
     );
   }
 
+  /// Los botones de acción ahora abrirán el mismo diálogo de detalles del usuario.
   Widget _buildActionButtons(BuildContext context, User user) {
-    double iconSize = MediaQuery.of(context).size.width * 0.06;
-    iconSize = iconSize.clamp(24, 30);
-    return Container(
-      width: double.infinity,
-      alignment: Alignment.bottomCenter,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF063970), Color(0xFF66B3FF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildIconButton(Icons.check, 'Aprobar', iconSize, () {
-            _showAssignRoleDialog(context, user);
-          }),
-          _buildIconButton(Icons.edit, 'Editar', iconSize, () {
-            _showEditUserDialog(context, user);
-          }),
-          _buildIconButton(Icons.delete, 'Rechazar', iconSize, () {}),
-        ],
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        double iconSize = constraints.maxWidth * 0.15;
+        iconSize = iconSize.clamp(20, 30);
+        return Container(
+          width: double.infinity,
+          alignment: Alignment.bottomCenter,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF063970), Color(0xFF66B3FF)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildIconButton(Icons.check, 'Aprobar', iconSize, () {
+                _showUserDetailsDialog(context, user);
+              }),
+              _buildIconButton(Icons.edit, 'Editar', iconSize, () {
+                _showUserDetailsDialog(context, user);
+              }),
+              _buildIconButton(Icons.close, 'Rechazar', iconSize, () {
+                _showUserDetailsDialog(context, user);
+              }),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -219,79 +263,7 @@ class PendingUserComponentContent extends StatelessWidget {
     );
   }
 
-  void _showAssignRoleDialog(BuildContext context, User user) {
-    final roles = ['Admin', 'Usuario', 'Conductor'];
-    String selectedRole = roles[0];
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Asignar Rol', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: DropdownButton<String>(
-            value: selectedRole,
-            onChanged: (newRole) {
-              if (newRole != null) selectedRole = newRole;
-            },
-            items: roles.map((role) => DropdownMenuItem(
-              value: role,
-              child: Text(role),
-            )).toList(),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancelar"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text("Aceptar"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showEditUserDialog(BuildContext context, User user) {
-    final nameController = TextEditingController(text: user.name);
-    final usernameController = TextEditingController(text: user.username);
-    final emailController = TextEditingController(text: user.mail);
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text("Editar usuario", style: TextStyle(fontWeight: FontWeight.bold)),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildTextField(nameController, "Nombre"),
-                _buildTextField(usernameController, "Username"),
-                _buildTextField(emailController, "Correo electrónico"),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancelar"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text("Guardar"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
+  /// Método único que abre el diálogo de detalles del usuario, igual que al pulsar los tres puntos.
   void _showUserDetailsDialog(BuildContext context, User user) {
     String name = user.name;
     String surnames = user.surnames;
@@ -300,6 +272,7 @@ class PendingUserComponentContent extends StatelessWidget {
     String phone = user.phoneNumber;
     String address = user.address;
     bool isEditing = false;
+
     showDialog(
       context: context,
       builder: (context) {
@@ -313,7 +286,10 @@ class PendingUserComponentContent extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Datos personales', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.black54)),
+                      const Text(
+                        'Datos personales',
+                        style: TextStyle(fontStyle: FontStyle.italic, color: Colors.black54),
+                      ),
                       const SizedBox(height: 8),
                       Text('Usuario: $username'),
                       Text('Email: $email'),
@@ -360,52 +336,58 @@ class PendingUserComponentContent extends StatelessWidget {
                       TextField(
                         decoration: const InputDecoration(labelText: 'Nombre'),
                         controller: TextEditingController(text: name),
-                        onChanged: (value) { name = value; },
+                        onChanged: (value) {
+                          name = value;
+                        },
                       ),
                       TextField(
                         decoration: const InputDecoration(labelText: 'Apellidos'),
                         controller: TextEditingController(text: surnames),
-                        onChanged: (value) { surnames = value; },
+                        onChanged: (value) {
+                          surnames = value;
+                        },
                       ),
                       TextField(
                         decoration: const InputDecoration(labelText: 'Usuario'),
                         controller: TextEditingController(text: username),
-                        onChanged: (value) { username = value; },
+                        onChanged: (value) {
+                          username = value;
+                        },
                       ),
                       TextField(
                         decoration: const InputDecoration(labelText: 'Email'),
                         controller: TextEditingController(text: email),
-                        onChanged: (value) { email = value; },
+                        onChanged: (value) {
+                          email = value;
+                        },
                       ),
                       TextField(
                         decoration: const InputDecoration(labelText: 'Teléfono'),
                         controller: TextEditingController(text: phone),
-                        onChanged: (value) { phone = value; },
+                        onChanged: (value) {
+                          phone = value;
+                        },
                       ),
                       TextField(
                         decoration: const InputDecoration(labelText: 'Dirección'),
                         controller: TextEditingController(text: address),
-                        onChanged: (value) { address = value; },
+                        onChanged: (value) {
+                          address = value;
+                        },
                       ),
                     ],
                   ),
                 ),
                 actions: [
                   TextButton(
-                    onPressed: () {
-                      setState(() {
-                        isEditing = false;
-                      });
-                    },
+                    onPressed: () => Navigator.pop(context),
                     child: const Text('Cancelar'),
                   ),
                   ElevatedButton(
                     onPressed: () {
-                      setState(() {
-                        isEditing = false;
-                      });
+                      Navigator.pop(context);
                     },
-                    child: const Text('Confirmar'),
+                    child: const Text('Guardar cambios'),
                   ),
                 ],
               );
@@ -415,17 +397,4 @@ class PendingUserComponentContent extends StatelessWidget {
       },
     );
   }
-}
-
-Widget _buildTextField(TextEditingController controller, String label) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 8.0),
-    child: TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    ),
-  );
 }
