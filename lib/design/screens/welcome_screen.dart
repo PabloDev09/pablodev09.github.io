@@ -59,10 +59,26 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
     final loadingProvider = Provider.of<LoadingProvider>(context, listen: true);
     final theme = Theme.of(context);
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Positioned(
+            top: 220,
+            left: 0,
+            right: 0,
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: Center(child: _buildDynamicMessage()),
+            ),
+          ),
+          
+        ),
       body: Stack(
         children: [
           Positioned.fill(
@@ -80,7 +96,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             ),
           ),
           Positioned(
-            top: 60,
+            top: screenHeight * 0.1,
             left: 0,
             right: 0,
             child: FadeTransition(
@@ -106,15 +122,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   ),
                 ),
               ),
-            ),
-          ),
-          Positioned(
-            top: 220,
-            left: 0,
-            right: 0,
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: Center(child: _buildDynamicMessage()),
             ),
           ),
           Align(
